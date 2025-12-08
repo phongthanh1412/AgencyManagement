@@ -1,35 +1,66 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useState } from 'react';
+import Login from './components/Login';
+import SignUp from './components/SignUp';
+import General from './components/General';
+import DebtReport from './components/DebtReport';
+import ExportReceipt from './components/ExportReceipt';
+import PaymentReceipt from './components/PaymentReceipt';
+import './App.css';
 
-function App() {
-  const [count, setCount] = useState(0)
+const Agency = ({ user, onLogout, onNavigate }) => (
+  <General user={user} onLogout={onLogout} onNavigate={onNavigate} />
+);
+
+const RevenueReport = ({ user, onLogout, onNavigate }) => (
+  <General user={user} onLogout={onLogout} onNavigate={onNavigate} />
+);
+
+export default function App() {
+  const [currentPage, setCurrentPage] = useState('login');
+  const [user, setUser] = useState(null);
+
+  const handleLogin = (userData) => {
+    setUser(userData);
+    setCurrentPage('general'); // Redirect to General dashboard after login
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    setCurrentPage('login');
+  };
 
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      {currentPage === 'login' && (
+        <Login onNavigate={setCurrentPage} onLogin={handleLogin} />
+      )}
+      {currentPage === 'signup' && (
+        <SignUp onNavigate={setCurrentPage} />
+      )}
+      {currentPage === 'general' && user && (
+        <General user={user} onLogout={handleLogout} onNavigate={setCurrentPage} />
+      )}
+      {currentPage === 'agency' && user && (
+        <Agency user={user} onLogout={handleLogout} onNavigate={setCurrentPage} />
+      )}
+      {currentPage === 'debt-report' && user && (
+        <DebtReport user={user} onLogout={handleLogout} onNavigate={setCurrentPage} />
+      )}
+      {currentPage === 'export-receipt' && user && (
+        <ExportReceipt user={user} onLogout={handleLogout} onNavigate={setCurrentPage} currentPage="export-receipt" />
+      )}
+      {currentPage === 'create-export-receipt' && user && (
+        <ExportReceipt user={user} onLogout={handleLogout} onNavigate={setCurrentPage} currentPage="create-export-receipt" />
+      )}
+      {currentPage === 'payment-receipt' && user && (
+        <PaymentReceipt user={user} onLogout={handleLogout} onNavigate={setCurrentPage} currentPage="payment-receipt" />
+      )}
+      {currentPage === 'create-payment-receipt' && user && (
+        <PaymentReceipt user={user} onLogout={handleLogout} onNavigate={setCurrentPage} currentPage="create-payment-receipt" />
+      )}
+      {currentPage === 'revenue-report' && user && (
+        <RevenueReport user={user} onLogout={handleLogout} onNavigate={setCurrentPage} />
+      )}
     </>
-  )
+  );
 }
-
-export default App
