@@ -1,41 +1,23 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import MasterLayout from "./MasterLayout";
 import "../App.css";
-
-const agencies = [
-  { 
-    id: 1, 
-    name: "Golden Star Trading Co.", 
-    address: "123 Main Street, District 1",
-    phone: "(555) 123-4567",
-    currentDebt: 25000
-  },
-  { 
-    id: 2, 
-    name: "Blue Ocean Distributors",
-    address: "456 Ocean Ave, District 2", 
-    phone: "(555) 234-5678",
-    currentDebt: 42000
-  },
-  { 
-    id: 3, 
-    name: "Red Dragon Imports",
-    address: "789 Dragon St, District 3",
-    phone: "(555) 345-6789", 
-    currentDebt: 31000
-  }
-];
-
-const productsList = ["Product A", "Product B", "Product C", "Product D"];
-const unitsList = ["Box", "Carton", "Piece", "Set"];
+import { getAgencies, updateAgency, productsList, unitsList } from "../services/mockApi";
 
 function ExportReceipt({ user, onLogout, onNavigate, currentPage = 'export-receipt' }) {
-  const [selectedAgency, setSelectedAgency] = useState(agencies[0]);
-  const [receiptDate, setReceiptDate] = useState("19/07/2025");
+  const [agencies, setAgencies] = useState([]);
+  const [selectedAgency, setSelectedAgency] = useState(null);
+  const [receiptDate, setReceiptDate] = useState("2025-07-19");
   const [products, setProducts] = useState([
     { id: 1, product: "Product A", unit: "Box", quantity: 2, unitPrice: 100, amount: 200 },
     { id: 2, product: "Product B", unit: "Carton", quantity: 1, unitPrice: 150, amount: 150 }
   ]);
+
+  useEffect(() => {
+    getAgencies().then((list) => {
+      setAgencies(list);
+      setSelectedAgency(list[0] || null);
+    });
+  }, []);
 
   const handleAgencyChange = (e) => {
     const agency = agencies.find(a => a.name === e.target.value);
@@ -72,12 +54,19 @@ function ExportReceipt({ user, onLogout, onNavigate, currentPage = 'export-recei
   };
 
   const totalAmount = products.reduce((sum, p) => sum + p.amount, 0);
-  const newDebt = selectedAgency.currentDebt + totalAmount;
-  const debtLimit = 50000;
+  const newDebt = selectedAgency ? (selectedAgency.debt || 0) + totalAmount : 0;
+  const debtLimit = selectedAgency?.type === "Type 1" ? 20000 : 50000; // theo QĐ2
 
   const handleCreateReceipt = () => {
+    if (!selectedAgency) return;
     alert(`Export Receipt Created!\nAgency: ${selectedAgency.name}\nTotal Amount: $${totalAmount.toFixed(2)}`);
-    // Add your API call here
+    updateAgency(selectedAgency.id, { debt: newDebt }).then(() => {
+      getAgencies().then((list) => {
+        setAgencies(list);
+        const updated = list.find((a) => a.id === selectedAgency.id);
+        setSelectedAgency(updated || list[0] || null);
+      });
+    });
   };
 
   const handleCancel = () => {
@@ -98,7 +87,7 @@ function ExportReceipt({ user, onLogout, onNavigate, currentPage = 'export-recei
           <div className="receipt-info-grid">
             <div className="input-group">
               <label>Agency <span className="required">*</span></label>
-              <select value={selectedAgency.name} onChange={handleAgencyChange}>
+              <select value={selectedAgency?.name || ""} onChange={handleAgencyChange}>
                 {agencies.map(agency => (
                   <option key={agency.id} value={agency.name}>{agency.name}</option>
                 ))}
@@ -107,27 +96,44 @@ function ExportReceipt({ user, onLogout, onNavigate, currentPage = 'export-recei
             
             <div className="input-group">
               <label>Receipt Date <span className="required">*</span></label>
-              <input 
-                type="text" 
-                value={receiptDate}
-                onChange={(e) => setReceiptDate(e.target.value)}
-                placeholder="dd/mm/yyyy"
-              />
+              <div
+                className="date-input-wrapper"
+                onClick={(e) => {
+                  const input = e.currentTarget.querySelector('input[type="date"]');
+                  if (input && input.showPicker) {
+                    input.showPicker();
+                  } else if (input) {
+                    input.focus();
+                  }
+                }}
+              >
+                <input 
+                  type="date"
+                  className="date-input"
+                  value={receiptDate}
+                  onChange={(e) => setReceiptDate(e.target.value)}
+                />
+                <span className="date-input-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#94a3b8">
+                    <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H5V9h14v9z"/>
+                  </svg>
+                </span>
+              </div>
             </div>
           </div>
 
           <div className="agency-info-row">
             <div className="agency-info-item">
               <div className="info-label">Address</div>
-              <div className="info-value">{selectedAgency.address}</div>
+              <div className="info-value">{selectedAgency?.address || "—"}</div>
             </div>
             <div className="agency-info-item">
               <div className="info-label">Phone</div>
-              <div className="info-value">{selectedAgency.phone}</div>
+              <div className="info-value">{selectedAgency?.phone || "—"}</div>
             </div>
             <div className="agency-info-item">
               <div className="info-label">Current Debt</div>
-              <div className="info-value debt-amount">${selectedAgency.currentDebt.toLocaleString()}.00</div>
+              <div className="info-value debt-amount">${(selectedAgency?.debt || 0).toLocaleString()}.00</div>
             </div>
           </div>
         </div>

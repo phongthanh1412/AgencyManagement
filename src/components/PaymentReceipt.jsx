@@ -1,39 +1,18 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import MasterLayout from "./MasterLayout";
 import "../App.css";
-
-const agencies = [
-  { 
-    id: 1, 
-    name: "Golden Star Trading Co.", 
-    address: "123 Main Street, District 1",
-    phone: "(555) 123-4567",
-    email: "contact@goldenstar.com",
-    currentDebt: 25000
-  },
-  { 
-    id: 2, 
-    name: "Blue Ocean Distributors",
-    address: "456 Ocean Ave, District 2", 
-    phone: "(555) 234-5678",
-    email: "info@blueocean.com",
-    currentDebt: 42000
-  },
-  { 
-    id: 3, 
-    name: "Red Dragon Imports",
-    address: "789 Dragon St, District 3",
-    phone: "(555) 345-6789",
-    email: "contact@reddragon.com", 
-    currentDebt: 31000
-  }
-];
+import { getAgencies, updateAgency } from "../services/mockApi";
 
 function PaymentReceipt({ user, onLogout, onNavigate, currentPage = 'payment-receipt' }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedAgency, setSelectedAgency] = useState(null);
-  const [receiptDate, setReceiptDate] = useState("19/07/2025");
+  const [receiptDate, setReceiptDate] = useState("2025-07-19");
   const [amountCollected, setAmountCollected] = useState("");
+  const [agencies, setAgencies] = useState([]);
+
+  useEffect(() => {
+    getAgencies().then(setAgencies);
+  }, []);
 
   const handleAgencySelect = (agency) => {
     setSelectedAgency(agency);
@@ -47,17 +26,27 @@ function PaymentReceipt({ user, onLogout, onNavigate, currentPage = 'payment-rec
     }
     
     const amount = parseFloat(amountCollected);
-    const afterPayment = selectedAgency.currentDebt - amount;
+    if (selectedAgency && amount > selectedAgency.debt) {
+      alert("Amount collected cannot exceed the agency's current debt.");
+      return;
+    }
+    const afterPayment = selectedAgency.debt - amount;
     
     alert(
       `Payment Receipt Created!\n` +
       `Agency: ${selectedAgency.name}\n` +
       `Amount Collected: $${amount.toFixed(2)}\n` +
-      `Previous Debt: $${selectedAgency.currentDebt.toLocaleString()}.00\n` +
+      `Previous Debt: $${selectedAgency.debt.toLocaleString()}.00\n` +
       `After Payment: $${afterPayment.toLocaleString()}.00`
     );
     
-    // Reset form
+    // Update mock debt
+    if (selectedAgency) {
+      updateAgency(selectedAgency.id, { debt: selectedAgency.debt - amount }).then(() => {
+        getAgencies().then(setAgencies);
+      });
+    }
+
     setSelectedAgency(null);
     setSearchQuery("");
     setAmountCollected("");
@@ -68,7 +57,7 @@ function PaymentReceipt({ user, onLogout, onNavigate, currentPage = 'payment-rec
   };
 
   const afterPayment = selectedAgency && amountCollected 
-    ? selectedAgency.currentDebt - parseFloat(amountCollected || 0)
+    ? selectedAgency.debt - parseFloat(amountCollected || 0)
     : 0;
 
   return (
@@ -108,7 +97,7 @@ function PaymentReceipt({ user, onLogout, onNavigate, currentPage = 'payment-rec
                         >
                           <div className="agency-dropdown-name">{agency.name}</div>
                           <div className="agency-dropdown-debt">
-                            Current Debt: ${agency.currentDebt.toLocaleString()}.00
+                            Current Debt: ${agency.debt.toLocaleString()}.00
                           </div>
                         </div>
                       ))}
@@ -132,12 +121,29 @@ function PaymentReceipt({ user, onLogout, onNavigate, currentPage = 'payment-rec
           
           <div className="input-group">
             <label>Receipt Date <span className="required">*</span></label>
-            <input 
-              type="text" 
-              value={receiptDate}
-              onChange={(e) => setReceiptDate(e.target.value)}
-              placeholder="dd/mm/yyyy"
-            />
+            <div
+              className="date-input-wrapper"
+              onClick={(e) => {
+                const input = e.currentTarget.querySelector('input[type=\"date\"]');
+                if (input && input.showPicker) {
+                  input.showPicker();
+                } else if (input) {
+                  input.focus();
+                }
+              }}
+            >
+              <input 
+                type="date"
+                className="date-input"
+                value={receiptDate}
+                onChange={(e) => setReceiptDate(e.target.value)}
+              />
+              <span className="date-input-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#94a3b8">
+                  <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H5V9h14v9z"/>
+                </svg>
+              </span>
+            </div>
           </div>
         </div>
 
@@ -146,15 +152,15 @@ function PaymentReceipt({ user, onLogout, onNavigate, currentPage = 'payment-rec
             <div className="agency-info-row payment-info-row">
               <div className="agency-info-item">
                 <div className="info-label">Address</div>
-                <div className="info-value">{selectedAgency.address}</div>
+                <div className="info-value">{selectedAgency?.address || "—"}</div>
               </div>
               <div className="agency-info-item">
                 <div className="info-label">Phone</div>
-                <div className="info-value">{selectedAgency.phone}</div>
+                <div className="info-value">{selectedAgency?.phone || "—"}</div>
               </div>
               <div className="agency-info-item">
                 <div className="info-label">Email</div>
-                <div className="info-value">{selectedAgency.email}</div>
+                <div className="info-value">{selectedAgency?.email || "—"}</div>
               </div>
             </div>
 
@@ -162,7 +168,7 @@ function PaymentReceipt({ user, onLogout, onNavigate, currentPage = 'payment-rec
               <div className="debt-summary-item">
                 <div className="debt-summary-label">Current Outstanding Debt</div>
                 <div className="debt-summary-amount current-debt">
-                  ${selectedAgency.currentDebt.toLocaleString()}.00
+                  ${selectedAgency.debt.toLocaleString()}.00
                 </div>
               </div>
               <div className="debt-summary-item">

@@ -23,10 +23,16 @@ function DebtReport({ user, onLogout, onNavigate }) {
   const [selectedPeriod, setSelectedPeriod] = useState("This Month");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [showReportModal, setShowReportModal] = useState(false);
+  const isAdmin = (user?.role || "").toLowerCase() === "admin";
 
   const handleGenerateReport = () => {
-    alert(`Generating report for ${selectedPeriod} from ${fromDate || 'start'} to ${toDate || 'end'}`);
+    setShowReportModal(true);
   };
+
+  const totalBegin = agencies.reduce((s, a) => s + a.begin, 0);
+  const totalChange = agencies.reduce((s, a) => s + a.change, 0);
+  const totalEnd = agencies.reduce((s, a) => s + a.end, 0);
 
   return (
     <MasterLayout currentPage="debt-report" user={user} onLogout={onLogout} onNavigate={onNavigate}>
@@ -38,32 +44,77 @@ function DebtReport({ user, onLogout, onNavigate }) {
       <section className="debt-filters">
           <div className="debt-filters-header">
             <h3>Report Filters</h3>
-            <button className="debt-generate" onClick={handleGenerateReport}>
-              Generate Report
-            </button>
+            {!isAdmin && (
+              <button className="debt-generate" onClick={handleGenerateReport}>
+                Generate Report
+              </button>
+            )}
           </div>
           <div className="debt-filter-row">
-            <select 
-              value={selectedPeriod} 
-              onChange={(e) => setSelectedPeriod(e.target.value)}
-            >
-              <option>This Month</option>
-              <option>Last Month</option>
-              <option>Last 3 Months</option>
-              <option>Custom Range</option>
-            </select>
-            <input 
-              type="text" 
-              placeholder="From dd/mm/yyyy"
-              value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
-            />
-            <input 
-              type="text" 
-              placeholder="To dd/mm/yyyy"
-              value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
-            />
+            <div className="date-input-group">
+              <span className="date-input-caption">Period</span>
+              <select 
+                value={selectedPeriod} 
+                onChange={(e) => setSelectedPeriod(e.target.value)}
+              >
+                <option>This Month</option>
+                <option>Last Month</option>
+                <option>Last 3 Months</option>
+                <option>Custom Range</option>
+              </select>
+            </div>
+            <div className="date-input-group">
+              <span className="date-input-caption">From</span>
+              <div
+                className="date-input-wrapper"
+                onClick={(e) => {
+                  const input = e.currentTarget.querySelector('input[type="date"]');
+                  if (input && input.showPicker) {
+                    input.showPicker();
+                  } else if (input) {
+                    input.focus();
+                  }
+                }}
+              >
+                <input 
+                  type="date"
+                  className="date-input"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                />
+                <span className="date-input-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#94a3b8">
+                    <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H5V9h14v9z"/>
+                  </svg>
+                </span>
+              </div>
+            </div>
+            <div className="date-input-group">
+              <span className="date-input-caption">To</span>
+              <div
+                className="date-input-wrapper"
+                onClick={(e) => {
+                  const input = e.currentTarget.querySelector('input[type="date"]');
+                  if (input && input.showPicker) {
+                    input.showPicker();
+                  } else if (input) {
+                    input.focus();
+                  }
+                }}
+              >
+                <input 
+                  type="date"
+                  className="date-input"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                />
+                <span className="date-input-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#94a3b8">
+                    <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H5V9h14v9z"/>
+                  </svg>
+                </span>
+              </div>
+            </div>
           </div>
           <div className="debt-summary-row">
             <div className="debt-summary debt-summary-total">
@@ -122,10 +173,14 @@ function DebtReport({ user, onLogout, onNavigate }) {
                   <tr key={a.no}>
                     <td>{a.no}</td>
                     <td className="agency-name">{a.name}</td>
-                    <td>{a.type}</td>
-                    <td>${a.begin.toLocaleString()}.00</td>
-                    <td className="change-positive">+${a.change.toLocaleString()}.00</td>
-                    <td className="ending-debt">${a.end.toLocaleString()}.00</td>
+                  <td>{a.type}</td>
+                  <td>${a.begin.toLocaleString()}.00</td>
+                  <td className={a.change >= 0 ? "text-positive" : "text-negative"}>
+                    {a.change >= 0
+                      ? `+$${a.change.toLocaleString()}.00`
+                      : `-$${Math.abs(a.change).toLocaleString()}.00`}
+                  </td>
+                  <td className="ending-debt">${a.end.toLocaleString()}.00</td>
                     <td>
                       <span className={statusClass[a.status]}>{a.status}</span>
                     </td>
@@ -134,7 +189,7 @@ function DebtReport({ user, onLogout, onNavigate }) {
                 <tr className="debt-table-total">
                   <td colSpan={3}><strong>Total</strong></td>
                   <td><strong>$152,000.00</strong></td>
-                  <td className="change-positive"><strong>+$29,000.00</strong></td>
+                  <td className="text-positive"><strong>+$29,000.00</strong></td>
                   <td className="ending-debt"><strong>$181,000.00</strong></td>
                   <td></td>
                 </tr>
@@ -142,6 +197,90 @@ function DebtReport({ user, onLogout, onNavigate }) {
             </table>
           </div>
         </section>
+
+        {showReportModal && (
+          <div className="regulation-modal-overlay" onClick={() => setShowReportModal(false)}>
+            <div className="debt-report-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="debt-report-modal-header">
+                <div>
+                  <h3>Debt Report - {selectedPeriod}</h3>
+                  <p>Detailed debt breakdown by agency</p>
+                </div>
+                <button className="regulation-modal-close" onClick={() => setShowReportModal(false)}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="debt-report-modal-body">
+                <div className="debt-report-period">
+                  <span>From: <strong>{fromDate || "start"}</strong></span>
+                  <span>To: <strong>{toDate || "end"}</strong></span>
+                </div>
+
+                <div className="table-wrapper">
+                  <table className="debt-table">
+                    <thead>
+                      <tr>
+                        <th>No.</th>
+                        <th>Agency</th>
+                        <th>Type</th>
+                        <th>Beginning Debt</th>
+                        <th>Changes</th>
+                        <th>Ending Debt</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {agencies.map((a) => (
+                        <tr key={a.no}>
+                          <td>{a.no}</td>
+                          <td className="agency-name">{a.name}</td>
+                          <td>{a.type}</td>
+                          <td>${a.begin.toLocaleString()}.00</td>
+                          <td className={a.change >= 0 ? "text-positive" : "text-negative"}>
+                            {a.change >= 0
+                              ? `+$${a.change.toLocaleString()}.00`
+                              : `-$${Math.abs(a.change).toLocaleString()}.00`}
+                          </td>
+                          <td className="ending-debt">${a.end.toLocaleString()}.00</td>
+                          <td>
+                            <span className={statusClass[a.status]}>{a.status}</span>
+                          </td>
+                        </tr>
+                      ))}
+                      <tr className="debt-table-total">
+                        <td colSpan={3}><strong>Total</strong></td>
+                        <td><strong>${totalBegin.toLocaleString()}.00</strong></td>
+                        <td className={totalChange >= 0 ? "text-positive" : "text-negative"}>
+                          <strong>
+                            {totalChange >= 0 ? "+" : "-"}
+                            ${Math.abs(totalChange).toLocaleString()}.00
+                          </strong>
+                        </td>
+                        <td className="ending-debt"><strong>${totalEnd.toLocaleString()}.00</strong></td>
+                        <td></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="debt-report-modal-footer">
+                <button className="btn-secondary" onClick={() => setShowReportModal(false)}>
+                  Close
+                </button>
+                <button
+                  className="btn-primary"
+                  onClick={() => alert("Mock export PDF - frontend only")}
+                >
+                  Export PDF
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
     </MasterLayout>
   );
 }

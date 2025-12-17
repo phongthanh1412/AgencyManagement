@@ -5,7 +5,7 @@ import "../App.css";
 function MasterLayout({ currentPage, user, onLogout, onNavigate, children }) {
   return (
     <div className="dashboard-container">
-      <Sidebar currentPage={currentPage} onNavigate={onNavigate} />
+      <Sidebar currentPage={currentPage} onNavigate={onNavigate} user={user} />
       
       <main className="dashboard-main">
         <header className="dashboard-header">
