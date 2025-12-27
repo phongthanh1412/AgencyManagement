@@ -1,22 +1,35 @@
 import React, { useEffect, useState } from "react";
 import MasterLayout from "./MasterLayout";
 import "../App.css";
-import { getAgencies, updateAgency, productsList, unitsList } from "../services/mockApi";
+import { getAgencies, updateAgency, getProducts, unitsList } from "../services/mockApi";
 
 function ExportReceipt({ user, onLogout, onNavigate, currentPage = 'export-receipt' }) {
   const [agencies, setAgencies] = useState([]);
+  const [productsList, setProductsList] = useState([]);
   const [selectedAgency, setSelectedAgency] = useState(null);
   const [receiptDate, setReceiptDate] = useState("2025-07-19");
   const [products, setProducts] = useState([
-    { id: 1, product: "Product A", unit: "Box", quantity: 2, unitPrice: 100, amount: 200 },
-    { id: 2, product: "Product B", unit: "Carton", quantity: 1, unitPrice: 150, amount: 150 }
+    { id: 1, product: "", unit: "Box", quantity: 1, unitPrice: 0, amount: 0 }
   ]);
 
   useEffect(() => {
-    getAgencies().then((list) => {
-      setAgencies(list);
-      setSelectedAgency(list[0] || null);
+    Promise.all([
+      getAgencies(),
+      getProducts()
+    ]).then(([agencyList, productList]) => {
+      setAgencies(agencyList);
+      setSelectedAgency(agencyList[0] || null);
+
+      // Handle product list whether it's strings or objects
+      if (productList && productList.length > 0) {
+        if (typeof productList[0] === 'object') {
+          setProductsList(productList.map(p => p.name));
+        } else {
+          setProductsList(productList);
+        }
+      }
     });
+
   }, []);
 
   const handleAgencyChange = (e) => {
@@ -79,11 +92,11 @@ function ExportReceipt({ user, onLogout, onNavigate, currentPage = 'export-recei
         <h1>Create Export Receipt</h1>
         <p>Create a new export receipt for an agency</p>
       </div>
-      
+
       <div className="export-receipt-content">
         <div className="receipt-card">
           <h3 className="receipt-section-title">Receipt Information</h3>
-            
+
           <div className="receipt-info-grid">
             <div className="input-group">
               <label>Agency <span className="required">*</span></label>
@@ -93,7 +106,7 @@ function ExportReceipt({ user, onLogout, onNavigate, currentPage = 'export-recei
                 ))}
               </select>
             </div>
-            
+
             <div className="input-group">
               <label>Receipt Date <span className="required">*</span></label>
               <div
@@ -107,7 +120,7 @@ function ExportReceipt({ user, onLogout, onNavigate, currentPage = 'export-recei
                   }
                 }}
               >
-                <input 
+                <input
                   type="date"
                   className="date-input"
                   value={receiptDate}
@@ -115,7 +128,7 @@ function ExportReceipt({ user, onLogout, onNavigate, currentPage = 'export-recei
                 />
                 <span className="date-input-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="#94a3b8">
-                    <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H5V9h14v9z"/>
+                    <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H5V9h14v9z" />
                   </svg>
                 </span>
               </div>
@@ -139,111 +152,111 @@ function ExportReceipt({ user, onLogout, onNavigate, currentPage = 'export-recei
         </div>
 
         <div className="receipt-card">
-            <div className="products-header">
-              <h3 className="receipt-section-title">Products</h3>
-              <button className="add-row-btn" onClick={handleAddRow}>
-                <span>+</span> Add Row
-              </button>
-            </div>
+          <div className="products-header">
+            <h3 className="receipt-section-title">Products</h3>
+            <button className="add-row-btn" onClick={handleAddRow}>
+              <span>+</span> Add Row
+            </button>
+          </div>
 
-            <div className="products-table-wrapper">
-              <table className="products-table">
-                <thead>
-                  <tr>
-                    <th style={{width: '60px'}}>No.</th>
-                    <th>Product</th>
-                    <th>Unit</th>
-                    <th>Quantity</th>
-                    <th>Unit Price</th>
-                    <th>Amount</th>
-                    <th style={{width: '60px'}}></th>
+          <div className="products-table-wrapper">
+            <table className="products-table">
+              <thead>
+                <tr>
+                  <th style={{ width: '60px' }}>No.</th>
+                  <th>Product</th>
+                  <th>Unit</th>
+                  <th>Quantity</th>
+                  <th>Unit Price</th>
+                  <th>Amount</th>
+                  <th style={{ width: '60px' }}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {products.map((product, index) => (
+                  <tr key={product.id}>
+                    <td className="text-center">{index + 1}</td>
+                    <td>
+                      <select
+                        value={product.product}
+                        onChange={(e) => handleProductChange(product.id, 'product', e.target.value)}
+                        className="table-select"
+                      >
+                        {productsList.map(p => (
+                          <option key={p} value={p}>{p}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td>
+                      <select
+                        value={product.unit}
+                        onChange={(e) => handleProductChange(product.id, 'unit', e.target.value)}
+                        className="table-select"
+                      >
+                        {unitsList.map(u => (
+                          <option key={u} value={u}>{u}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        value={product.quantity}
+                        onChange={(e) => handleProductChange(product.id, 'quantity', Number(e.target.value))}
+                        className="table-input text-center"
+                        min="1"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        value={product.unitPrice}
+                        onChange={(e) => handleProductChange(product.id, 'unitPrice', Number(e.target.value))}
+                        className="table-input"
+                        min="0"
+                        step="0.01"
+                      />
+                    </td>
+                    <td className="amount-cell">${product.amount.toFixed(2)}</td>
+                    <td className="text-center">
+                      <button
+                        className="delete-btn"
+                        onClick={() => handleDeleteRow(product.id)}
+                        disabled={products.length === 1}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+                        </svg>
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {products.map((product, index) => (
-                    <tr key={product.id}>
-                      <td className="text-center">{index + 1}</td>
-                      <td>
-                        <select 
-                          value={product.product}
-                          onChange={(e) => handleProductChange(product.id, 'product', e.target.value)}
-                          className="table-select"
-                        >
-                          {productsList.map(p => (
-                            <option key={p} value={p}>{p}</option>
-                          ))}
-                        </select>
-                      </td>
-                      <td>
-                        <select 
-                          value={product.unit}
-                          onChange={(e) => handleProductChange(product.id, 'unit', e.target.value)}
-                          className="table-select"
-                        >
-                          {unitsList.map(u => (
-                            <option key={u} value={u}>{u}</option>
-                          ))}
-                        </select>
-                      </td>
-                      <td>
-                        <input 
-                          type="number"
-                          value={product.quantity}
-                          onChange={(e) => handleProductChange(product.id, 'quantity', Number(e.target.value))}
-                          className="table-input text-center"
-                          min="1"
-                        />
-                      </td>
-                      <td>
-                        <input 
-                          type="number"
-                          value={product.unitPrice}
-                          onChange={(e) => handleProductChange(product.id, 'unitPrice', Number(e.target.value))}
-                          className="table-input"
-                          min="0"
-                          step="0.01"
-                        />
-                      </td>
-                      <td className="amount-cell">${product.amount.toFixed(2)}</td>
-                      <td className="text-center">
-                        <button 
-                          className="delete-btn"
-                          onClick={() => handleDeleteRow(product.id)}
-                          disabled={products.length === 1}
-                        >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-                          </svg>
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-            <div className="receipt-summary">
-              <div className="summary-row">
-                <span className="summary-label">Total Amount</span>
-                <span className="summary-value total-value">${totalAmount.toFixed(2)}</span>
-              </div>
-              <div className="summary-row debt-info">
-                <span className="summary-label-small">
-                  New debt would be: ${newDebt.toLocaleString()}.00 / ${debtLimit.toLocaleString()}.00
-                </span>
-              </div>
+          <div className="receipt-summary">
+            <div className="summary-row">
+              <span className="summary-label">Total Amount</span>
+              <span className="summary-value total-value">${totalAmount.toFixed(2)}</span>
             </div>
-
-            <div className="receipt-actions">
-              <button className="btn-primary" onClick={handleCreateReceipt}>
-                Create Receipt
-              </button>
-              <button className="btn-secondary" onClick={handleCancel}>
-                Cancel
-              </button>
+            <div className="summary-row debt-info">
+              <span className="summary-label-small">
+                New debt would be: ${newDebt.toLocaleString()}.00 / ${debtLimit.toLocaleString()}.00
+              </span>
             </div>
           </div>
+
+          <div className="receipt-actions">
+            <button className="btn-primary" onClick={handleCreateReceipt}>
+              Create Receipt
+            </button>
+            <button className="btn-secondary" onClick={handleCancel}>
+              Cancel
+            </button>
+          </div>
         </div>
+      </div>
     </MasterLayout>
   );
 }

@@ -17,7 +17,13 @@ import './App.css';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('login');
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('user'));
+    } catch {
+      return null;
+    }
+  });
   const [editingAgency, setEditingAgency] = useState(null);
 
   const handleLogin = (userData) => {
@@ -26,6 +32,7 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('user');
     setUser(null);
     setCurrentPage('login');
   };
