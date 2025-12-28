@@ -1,5 +1,5 @@
 import React from "react";
-import MasterLayout from "./MasterLayout";
+import MasterLayout from "../components/Layout";
 import "../App.css";
 
 function General({ user, onLogout, onNavigate }) {

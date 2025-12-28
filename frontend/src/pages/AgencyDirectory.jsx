@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import MasterLayout from "./MasterLayout";
+import MasterLayout from "../components/Layout";
 import "../App.css";
 import { getAgencies, deleteAgency } from '../services/agencyService';
 

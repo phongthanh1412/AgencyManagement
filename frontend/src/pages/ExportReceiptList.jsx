@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import MasterLayout from "./MasterLayout";
+import MasterLayout from "../components/Layout";
 import "../App.css";
 
 import { getExportReceipts, getExportReceiptDetail } from '../services/exportReceiptService';

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import MasterLayout from "./MasterLayout";
+import MasterLayout from "../components/Layout";
 import "../App.css";
 import { getAgencies } from '../services/agencyService';
 import { getProducts } from '../services/productService';

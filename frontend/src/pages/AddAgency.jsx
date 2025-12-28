@@ -1,14 +1,13 @@
-import React, { useEffect, useState } from "react";
-import MasterLayout from "./MasterLayout";
+import React, { useState } from "react";
+import MasterLayout from "../components/Layout";
 import "../App.css";
-import { updateAgency, deleteAgency } from '../services/agencyService';
+import { createAgency } from '../services/agencyService';
 import { getAgencyTypes } from '../services/agencyTypeService';
 
-function EditAgency({ user, agency, onLogout, onNavigate }) {
+function AddAgency({ user, onLogout, onNavigate }) {
   const isAdmin = (user?.role || "").toLowerCase() === "admin";
   const [formData, setFormData] = useState({
-    id: null,
-    name: "",
+    agencyName: "",
     type: "",
     phone: "",
     email: "",
@@ -16,112 +15,76 @@ function EditAgency({ user, agency, onLogout, onNavigate }) {
     district: "",
     receivedDate: "",
   });
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [types, setTypes] = useState([]);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [createdAgency, setCreatedAgency] = useState(null);
 
   useEffect(() => {
-    getAgencyTypes().then(setTypes).catch(console.error);
+    getAgencyTypes().then(setTypes).catch(err => console.error(err));
   }, []);
-
-  useEffect(() => {
-    if (agency) {
-      let foundTypeId = agency.typeId?._id || agency.typeId || "";
-
-      // If foundTypeId is empty or just a name (length < 24 usually or check against types), try to find by name
-      if ((!foundTypeId || !types.some(t => t._id === foundTypeId)) && agency.type) {
-        const found = types.find(t => t.name === agency.type);
-        if (found) foundTypeId = found._id;
-      }
-
-      setFormData({
-        id: agency._id || agency.id,
-        name: agency.name || "",
-        type: foundTypeId,
-        phone: agency.phone || "",
-        email: agency.email || "",
-        address: agency.address || "",
-        district: agency.district || "",
-        receivedDate: agency.receivedDate || "",
-      });
-    }
-  }, [agency, types]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!isAdmin || !formData.id) return;
-
-    const updatedAgency = {
-      id: formData.id,
-      name: formData.name,
-      typeId: formData.type, // ID
-      district: Number(formData.district), // Ensure district is a number
+    if (!isAdmin) {
+      return;
+    }
+    const newAgency = {
+      name: formData.agencyName,
+      typeId: formData.type, // ID from select
+      district: formData.district, // Just number or string? Backend expects number likely based on controller logic: district > maxDistrict (number comparison)
+      // Controller: district > regulation.maxDistrict. 
+      // Controller uses Number(district) in getAgencies filter, but createAgency stores strictly. 
+      // If controller stores as is, and compares, assumes Number. 
+      // AddAgency sets district "District X" in original code?
+      // "district: formData.district ? `District ${formData.district}` : "","
+      // Backend: "const count = await Agency.countDocuments({ district });"
+      // If backend expects Number or String "District X"? 
+      // "const regulation = await SystemRegulation.findOne(); if (district > regulation.maxDistrict)"
+      // This implies district is a number.
+      // So I should send a number.
       phone: formData.phone,
       email: formData.email,
       address: formData.address,
-      debt: agency?.debt || 0,
-      receivedDate: formData.receivedDate || new Date().toISOString().slice(0, 10),
+      receiptDate: formData.receivedDate || new Date().toISOString().slice(0, 10),
     };
 
-    updateAgency(formData.id, updatedAgency).then(() => {
+    createAgency(newAgency).then((created) => {
+      setCreatedAgency(created);
       setShowSuccess(true);
     });
   };
 
-  const handleDelete = () => {
-    if (!isAdmin || !formData.id) return;
-    setShowDeleteConfirm(true);
+  const handleCancel = () => {
+    onNavigate('general');
   };
-
-  const confirmDelete = () => {
-    if (!isAdmin || !formData.id) return;
-    deleteAgency(formData.id).then(() => {
-      setShowDeleteConfirm(false);
-      onNavigate("agency");
-    });
-  };
-
-  if (!agency) {
-    return (
-      <MasterLayout currentPage="agency" user={user} onLogout={onLogout} onNavigate={onNavigate}>
-        <div className="page-header">
-          <h1>Edit Agency</h1>
-          <p>No agency selected.</p>
-        </div>
-      </MasterLayout>
-    );
-  }
 
   return (
-    <MasterLayout currentPage="agency" user={user} onLogout={onLogout} onNavigate={onNavigate}>
+    <MasterLayout currentPage="add-agency" user={user} onLogout={onLogout} onNavigate={onNavigate}>
       <div className="page-header">
-        <div>
-          <h1>Edit Agency</h1>
-          <p>Update agency information</p>
+        <h1>Add New Agency</h1>
+        <p>Create a new agency in the system</p>
+      </div>
+
+      <div className="restrictions-box">
+        <div className="restrictions-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+          </svg>
         </div>
-        {isAdmin && (
-          <div className="regulation-confirm-actions">
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={() => onNavigate("agency")}
-            >
-              Back
-            </button>
-            <button
-              type="button"
-              className="btn-danger"
-              onClick={handleDelete}
-            >
-              Delete
-            </button>
-          </div>
-        )}
+        <div className="restrictions-content">
+          <div className="restrictions-title">Please note the following restrictions:</div>
+          <ul className="restrictions-list">
+            <li>Maximum 4 agencies per district</li>
+            <li>Cannot add agencies to districts greater than 20</li>
+            <li>Type 1 agencies have a max debt limit of $50,000</li>
+            <li>Type 2 agencies have a max debt limit of $20,000</li>
+          </ul>
+        </div>
       </div>
 
       <div className="receipt-card">
@@ -129,7 +92,7 @@ function EditAgency({ user, agency, onLogout, onNavigate }) {
 
         {!isAdmin ? (
           <div style={{ padding: "12px 0", color: "#ef4444", fontWeight: 600 }}>
-            You do not have permission to edit agencies.
+            You do not have permission to create agencies.
           </div>
         ) : (
           <form onSubmit={handleSubmit}>
@@ -138,8 +101,8 @@ function EditAgency({ user, agency, onLogout, onNavigate }) {
                 <label>Agency Name <span className="required">*</span></label>
                 <input
                   type="text"
-                  name="name"
-                  value={formData.name}
+                  name="agencyName"
+                  value={formData.agencyName}
                   onChange={handleChange}
                   placeholder="Enter agency name"
                   required
@@ -174,24 +137,26 @@ function EditAgency({ user, agency, onLogout, onNavigate }) {
               </div>
 
               <div className="input-group">
-                <label>Email</label>
+                <label>Email <span className="required">*</span></label>
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder="contact@example.com"
+                  placeholder="agency@example.com"
+                  required
                 />
               </div>
 
               <div className="input-group">
-                <label>Address</label>
+                <label>Address <span className="required">*</span></label>
                 <input
                   type="text"
                   name="address"
                   value={formData.address}
                   onChange={handleChange}
                   placeholder="Enter address"
+                  required
                 />
               </div>
 
@@ -241,9 +206,9 @@ function EditAgency({ user, agency, onLogout, onNavigate }) {
 
             <div className="receipt-actions">
               <button type="submit" className="btn-primary">
-                Update Agency
+                Create Agency
               </button>
-              <button type="button" className="btn-secondary" onClick={() => onNavigate('agency')}>
+              <button type="button" className="btn-secondary" onClick={handleCancel}>
                 Cancel
               </button>
             </div>
@@ -251,7 +216,7 @@ function EditAgency({ user, agency, onLogout, onNavigate }) {
         )}
       </div>
 
-      {showSuccess && (
+      {showSuccess && createdAgency && (
         <div className="regulation-modal-overlay" onClick={() => setShowSuccess(false)}>
           <div className="regulation-confirm-modal" onClick={(e) => e.stopPropagation()}>
             <div className="regulation-confirm-icon" style={{ background: "#ecfdf3", color: "#10b981" }}>
@@ -259,36 +224,17 @@ function EditAgency({ user, agency, onLogout, onNavigate }) {
                 <path d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h3>Agency Updated</h3>
-            <p>The agency has been updated successfully. Go back to Agency Directory?</p>
+            <h3>Agency Created</h3>
+            <p>
+              Agency <strong>"{createdAgency.name}"</strong> has been created successfully.
+              Do you want to view it in Agency Directory?
+            </p>
             <div className="regulation-confirm-actions">
               <button className="btn-secondary" onClick={() => setShowSuccess(false)}>
-                Stay
+                No
               </button>
               <button className="btn-primary" onClick={() => onNavigate('agency')}>
                 Yes, Go to Agency Directory
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showDeleteConfirm && (
-        <div className="regulation-modal-overlay" onClick={() => setShowDeleteConfirm(false)}>
-          <div className="regulation-confirm-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="regulation-confirm-icon">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-              </svg>
-            </div>
-            <h3>Delete Agency</h3>
-            <p>Are you sure you want to delete <strong>"{formData.name}"</strong>? This action cannot be undone.</p>
-            <div className="regulation-confirm-actions">
-              <button className="btn-secondary" onClick={() => setShowDeleteConfirm(false)}>
-                No
-              </button>
-              <button className="btn-danger" onClick={confirmDelete}>
-                Yes
               </button>
             </div>
           </div>
@@ -298,5 +244,5 @@ function EditAgency({ user, agency, onLogout, onNavigate }) {
   );
 }
 
-export default EditAgency;
+export default AddAgency;
 
