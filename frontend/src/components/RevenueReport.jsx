@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import MasterLayout from "./MasterLayout";
 import "../App.css";
-import { getAgencies, getExportReceipts } from "../services/mockApi";
+import { getAgencies } from '../services/agencyService';
+import { getExportReceipts } from '../services/exportReceiptService';
 
 export default function RevenueReport({ user, onLogout, onNavigate }) {
   const [period, setPeriod] = useState("This Month");

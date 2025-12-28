@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import MasterLayout from "./MasterLayout";
 import "../App.css";
-import { createAgency, getAgencyTypes } from "../services/mockApi";
+import { createAgency } from '../services/agencyService';
+import { getAgencyTypes } from '../services/agencyTypeService';
 
 function AddAgency({ user, onLogout, onNavigate }) {
   const isAdmin = (user?.role || "").toLowerCase() === "admin";

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import '../App.css';
-import { register } from '../services/mockApi';
+import { register } from '../services/authService';
 
 export default function SignUp({ onNavigate }) {
   const [form, setForm] = useState({

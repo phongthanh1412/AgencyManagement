@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import MasterLayout from "./MasterLayout";
 import "../App.css";
 
-import { getExportReceipts, getExportReceiptDetail } from "../services/mockApi";
+import { getExportReceipts, getExportReceiptDetail } from '../services/exportReceiptService';
 
 function ExportReceiptList({ user, onLogout, onNavigate }) {
   const [searchCode, setSearchCode] = useState("");

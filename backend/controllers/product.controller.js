@@ -1,10 +1,9 @@
-const Product = require("../models/Product");
-const mongoose = require("mongoose");
+const productService = require("../services/product.service");
 
 // GET /api/products
 exports.getProducts = async (req, res) => {
   try {
-    const products = await Product.find().sort({ createdAt: -1 });
+    const products = await productService.getProducts();
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -15,20 +14,11 @@ exports.getProducts = async (req, res) => {
 exports.createProduct = async (req, res) => {
   try {
     const { name, unit, unitPrice } = req.body;
-
-    if (!name || !unit || unitPrice == null) {
-      return res.status(400).json({ message: "Missing product data" });
-    }
-
-    const product = await Product.create({
-      name,
-      unit,
-      unitPrice
-    });
-
+    const product = await productService.createProduct(name, unit, unitPrice);
     res.status(201).json(product);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    const status = error.message === "Missing product data" ? 400 : 500;
+    res.status(status).json({ message: error.message });
   }
 };
 
@@ -36,26 +26,14 @@ exports.createProduct = async (req, res) => {
 exports.updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid product id" });
-    }
-
     const { name, unit, unitPrice } = req.body;
-
-    const product = await Product.findByIdAndUpdate(
-      id,
-      { name, unit, unitPrice },
-      { new: true }
-    );
-
-    if (!product) {
-      return res.status(404).json({ message: "Product not found" });
-    }
-
+    const product = await productService.updateProduct(id, name, unit, unitPrice);
     res.json(product);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    const status =
+      error.message === "Invalid product id" ? 400 :
+      error.message === "Product not found" ? 404 : 500;
+    res.status(status).json({ message: error.message });
   }
 };
 
@@ -63,19 +41,12 @@ exports.updateProduct = async (req, res) => {
 exports.deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid product id" });
-    }
-
-    const product = await Product.findByIdAndDelete(id);
-
-    if (!product) {
-      return res.status(404).json({ message: "Product not found" });
-    }
-
-    res.json({ message: "Product deleted successfully" });
+    const result = await productService.deleteProduct(id);
+    res.json(result);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    const status =
+      error.message === "Invalid product id" ? 400 :
+      error.message === "Product not found" ? 404 : 500;
+    res.status(status).json({ message: error.message });
   }
 };

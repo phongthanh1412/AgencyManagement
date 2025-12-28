@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import MasterLayout from "./MasterLayout";
 import "../App.css";
 
-import { getPaymentReceipts } from "../services/mockApi";
+import { getPaymentReceipts } from '../services/paymentReceiptService';
 
 function PaymentReceiptList({ user, onLogout, onNavigate }) {
   const [searchCode, setSearchCode] = useState("");

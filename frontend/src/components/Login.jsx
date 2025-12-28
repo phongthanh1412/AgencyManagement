@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import '../App.css';
-import { login } from '../services/mockApi';
+import { login } from '../services/authService';
 
 export default function Login({ onNavigate, onLogin }) {
   const [form, setForm] = useState({

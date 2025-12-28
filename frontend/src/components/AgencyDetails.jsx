@@ -5,7 +5,7 @@ import {
   getExportReceiptsByAgency,
   getPaymentReceiptsByAgency,
   getDebtHistoryByAgency,
-} from "../services/mockApi";
+} from "../services/agencyService";
 
 function AgencyDetails({ user, agency, onLogout, onNavigate, onEdit }) {
   const isAdmin = (user?.role || "").toLowerCase() === "admin";

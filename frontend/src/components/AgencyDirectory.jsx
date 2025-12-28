@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import MasterLayout from "./MasterLayout";
 import "../App.css";
-import { getAgencies, deleteAgency } from "../services/mockApi";
+import { getAgencies, deleteAgency } from '../services/agencyService';
 
 function AgencyDirectory({ user, onLogout, onNavigate, onEditAgency, onViewAgency }) {
   const [searchName, setSearchName] = useState("");

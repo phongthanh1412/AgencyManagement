@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
 import MasterLayout from "./MasterLayout";
 import "../App.css";
-import { getAgencies, getProducts, createExportReceipt, unitsList } from "../services/mockApi";
+import { getAgencies } from '../services/agencyService';
+import { getProducts } from '../services/productService';
+import { createExportReceipt } from '../services/exportReceiptService';
+
+// Units list constant
+const unitsList = ["Box", "Carton", "Piece", "Set"];
 
 function ExportReceipt({ user, onLogout, onNavigate, currentPage = 'export-receipt' }) {
   const [agencies, setAgencies] = useState([]);

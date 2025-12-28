@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import MasterLayout from "./MasterLayout";
 import "../App.css";
-import { getAgencies, createPaymentReceipt } from "../services/mockApi";
+import { getAgencies } from '../services/agencyService';
+import { createPaymentReceipt } from '../services/paymentReceiptService';
 
 function PaymentReceipt({ user, onLogout, onNavigate, currentPage = 'payment-receipt' }) {
   const [searchQuery, setSearchQuery] = useState("");
