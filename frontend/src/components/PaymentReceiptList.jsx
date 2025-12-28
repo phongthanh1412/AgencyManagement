@@ -2,35 +2,7 @@ import React, { useMemo, useState } from "react";
 import MasterLayout from "./MasterLayout";
 import "../App.css";
 
-const receiptsMock = [
-  {
-    id: 1,
-    code: "PAY-2024-003",
-    agency: "Silver Moon Supplies",
-    date: "2024-05-27",
-    amount: 3000,
-    method: "Bank Transfer",
-    note: "Monthly payment for outstanding debt",
-  },
-  {
-    id: 2,
-    code: "PAY-2024-002",
-    agency: "Blue Ocean Distributors",
-    date: "2024-04-30",
-    amount: 20000,
-    method: "Cash",
-    note: "Settlement of previous export receipts",
-  },
-  {
-    id: 3,
-    code: "PAY-2024-001",
-    agency: "Golden Star Trading Co.",
-    date: "2024-04-03",
-    amount: 1000,
-    method: "Bank Transfer",
-    note: "First payment for new contract",
-  },
-];
+import { getPaymentReceipts } from "../services/mockApi";
 
 function PaymentReceiptList({ user, onLogout, onNavigate }) {
   const [searchCode, setSearchCode] = useState("");
@@ -39,22 +11,28 @@ function PaymentReceiptList({ user, onLogout, onNavigate }) {
   const [toDate, setToDate] = useState("");
   const [selectedReceipt, setSelectedReceipt] = useState(null);
 
+  const [receipts, setReceipts] = useState([]);
+
+  React.useEffect(() => {
+    getPaymentReceipts().then(setReceipts).catch(console.error);
+  }, []);
+
   const agencies = useMemo(
-    () => ["All Agencies", ...Array.from(new Set(receiptsMock.map((r) => r.agency)))],
-    []
+    () => ["All Agencies", ...Array.from(new Set(receipts.map((r) => r.agencyName)))],
+    [receipts]
   );
 
   const filteredReceipts = useMemo(() => {
-    return receiptsMock.filter((r) => {
+    return receipts.filter((r) => {
       const matchCode =
-        !searchCode || r.code.toLowerCase().includes(searchCode.toLowerCase());
+        !searchCode || r.receiptCode.toLowerCase().includes(searchCode.toLowerCase());
       const matchAgency =
-        agencyFilter === "All Agencies" || r.agency === agencyFilter;
+        agencyFilter === "All Agencies" || r.agencyName === agencyFilter;
       const matchFrom = !fromDate || new Date(r.date) >= new Date(fromDate);
       const matchTo = !toDate || new Date(r.date) <= new Date(toDate);
       return matchCode && matchAgency && matchFrom && matchTo;
     });
-  }, [searchCode, agencyFilter, fromDate, toDate]);
+  }, [receipts, searchCode, agencyFilter, fromDate, toDate]);
 
   return (
     <MasterLayout
@@ -165,15 +143,15 @@ function PaymentReceiptList({ user, onLogout, onNavigate }) {
             <tbody>
               {filteredReceipts.map((r, index) => (
                 <tr
-                  key={r.id}
+                  key={r._id || index}
                   className="clickable-row"
                   onClick={() => setSelectedReceipt(r)}
                 >
                   <td>{index + 1}</td>
-                  <td>{r.code}</td>
-                  <td>{r.agency}</td>
+                  <td>{r.receiptCode}</td>
+                  <td>{r.agencyName}</td>
                   <td>{new Date(r.date).toLocaleDateString("en-GB")}</td>
-                  <td>${r.amount.toLocaleString()}.00</td>
+                  <td>${r.amountPaid.toLocaleString()}.00</td>
                 </tr>
               ))}
             </tbody>
@@ -206,9 +184,9 @@ function PaymentReceiptList({ user, onLogout, onNavigate }) {
               <div className="receipt-detail-info-grid">
                 <div className="receipt-detail-card">
                   <div className="info-label">Receipt ID</div>
-                  <div className="info-value">{selectedReceipt.code}</div>
+                  <div className="info-value">{selectedReceipt.receiptCode}</div>
                   <div className="info-label" style={{ marginTop: 16 }}>Agency Name</div>
-                  <div className="info-value">{selectedReceipt.agency}</div>
+                  <div className="info-value">{selectedReceipt.agencyName}</div>
                 </div>
                 <div className="receipt-detail-card">
                   <div className="info-label">Date Created</div>
@@ -217,7 +195,7 @@ function PaymentReceiptList({ user, onLogout, onNavigate }) {
                   </div>
                   <div className="info-label" style={{ marginTop: 16 }}>Amount Paid</div>
                   <div className="info-value total-value">
-                    ${selectedReceipt.amount.toLocaleString()}.00
+                    ${selectedReceipt.amountPaid.toLocaleString()}.00
                   </div>
                 </div>
               </div>

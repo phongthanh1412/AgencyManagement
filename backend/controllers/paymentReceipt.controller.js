@@ -104,8 +104,8 @@ exports.createPaymentReceipt = async (req, res) => {
     const msg = error.message || "Server error";
     const status =
       msg === "Agency not found" ? 404 :
-      msg.includes("exceeds") ? 400 :
-      500;
+        msg.includes("exceeds") ? 400 :
+          500;
 
     return res.status(status).json({ message: msg });
   } finally {
@@ -115,7 +115,7 @@ exports.createPaymentReceipt = async (req, res) => {
 
 exports.getPaymentReceipts = async (req, res) => {
   const receipts = await PaymentReceipt.find()
-    .select("receiptCode agencyName date amountPaid")
+    .select("receiptCode agencyId agencyName date amountPaid")
     .sort({ date: -1 });
 
   res.json(receipts);

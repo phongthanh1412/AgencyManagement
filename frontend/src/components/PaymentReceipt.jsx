@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import MasterLayout from "./MasterLayout";
 import "../App.css";
-import { getAgencies, updateAgency } from "../services/mockApi";
+import { getAgencies, createPaymentReceipt } from "../services/mockApi";
 
 function PaymentReceipt({ user, onLogout, onNavigate, currentPage = 'payment-receipt' }) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -19,44 +19,45 @@ function PaymentReceipt({ user, onLogout, onNavigate, currentPage = 'payment-rec
     setSearchQuery(agency.name);
   };
 
-  const handleCreateReceipt = () => {
+  const handleCreateReceipt = async () => {
     if (!amountCollected || parseFloat(amountCollected) <= 0) {
       alert("Please enter a valid amount collected");
       return;
     }
-    
+
     const amount = parseFloat(amountCollected);
     if (selectedAgency && amount > selectedAgency.debt) {
       alert("Amount collected cannot exceed the agency's current debt.");
       return;
     }
-    const afterPayment = selectedAgency.debt - amount;
-    
-    alert(
-      `Payment Receipt Created!\n` +
-      `Agency: ${selectedAgency.name}\n` +
-      `Amount Collected: $${amount.toFixed(2)}\n` +
-      `Previous Debt: $${selectedAgency.debt.toLocaleString()}.00\n` +
-      `After Payment: $${afterPayment.toLocaleString()}.00`
-    );
-    
-    // Update mock debt
-    if (selectedAgency) {
-      updateAgency(selectedAgency.id, { debt: selectedAgency.debt - amount }).then(() => {
-        getAgencies().then(setAgencies);
-      });
-    }
 
-    setSelectedAgency(null);
-    setSearchQuery("");
-    setAmountCollected("");
+    try {
+      await createPaymentReceipt({
+        agencyId: selectedAgency.id || selectedAgency._id,
+        date: receiptDate,
+        amountPaid: amount
+      });
+
+      alert(`Payment Receipt Created for ${selectedAgency.name}!`);
+
+      // Refresh agencies
+      const list = await getAgencies();
+      setAgencies(list);
+      // Clear form
+      setSelectedAgency(null);
+      setSearchQuery("");
+      setAmountCollected("");
+
+    } catch (error) {
+      alert("Failed to create payment receipt: " + error.message);
+    }
   };
 
   const handleCancel = () => {
     onNavigate('general');
   };
 
-  const afterPayment = selectedAgency && amountCollected 
+  const afterPayment = selectedAgency && amountCollected
     ? selectedAgency.debt - parseFloat(amountCollected || 0)
     : 0;
 
@@ -66,16 +67,16 @@ function PaymentReceipt({ user, onLogout, onNavigate, currentPage = 'payment-rec
         <h1>Create Payment Receipt</h1>
         <p>Record a payment from an agency</p>
       </div>
-      
+
       <div className="receipt-card">
         <h3 className="receipt-section-title">Payment Information</h3>
-            
+
         <div className="receipt-info-grid">
           <div className="input-group">
             <label>Agency <span className="required">*</span></label>
             {!selectedAgency ? (
               <div className="search-select-wrapper">
-                <input 
+                <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -83,14 +84,14 @@ function PaymentReceipt({ user, onLogout, onNavigate, currentPage = 'payment-rec
                   className="search-input"
                 />
                 <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="#94a3b8">
-                  <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                  <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
                 </svg>
                 {searchQuery && (
                   <div className="agency-dropdown">
                     {agencies
                       .filter(a => a.name.toLowerCase().includes(searchQuery.toLowerCase()))
                       .map(agency => (
-                        <div 
+                        <div
                           key={agency.id}
                           className="agency-dropdown-item"
                           onClick={() => handleAgencySelect(agency)}
@@ -105,8 +106,8 @@ function PaymentReceipt({ user, onLogout, onNavigate, currentPage = 'payment-rec
                 )}
               </div>
             ) : (
-              <select 
-                value={selectedAgency.name} 
+              <select
+                value={selectedAgency.name}
                 onChange={(e) => {
                   const agency = agencies.find(a => a.name === e.target.value);
                   setSelectedAgency(agency);
@@ -118,7 +119,7 @@ function PaymentReceipt({ user, onLogout, onNavigate, currentPage = 'payment-rec
               </select>
             )}
           </div>
-          
+
           <div className="input-group">
             <label>Receipt Date <span className="required">*</span></label>
             <div
@@ -132,7 +133,7 @@ function PaymentReceipt({ user, onLogout, onNavigate, currentPage = 'payment-rec
                 }
               }}
             >
-              <input 
+              <input
                 type="date"
                 className="date-input"
                 value={receiptDate}
@@ -140,7 +141,7 @@ function PaymentReceipt({ user, onLogout, onNavigate, currentPage = 'payment-rec
               />
               <span className="date-input-icon">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="#94a3b8">
-                  <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H5V9h14v9z"/>
+                  <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H5V9h14v9z" />
                 </svg>
               </span>
             </div>
@@ -183,7 +184,7 @@ function PaymentReceipt({ user, onLogout, onNavigate, currentPage = 'payment-rec
 
         <div className="input-group">
           <label>Amount Collected <span className="required">*</span></label>
-          <input 
+          <input
             type="number"
             value={amountCollected}
             onChange={(e) => setAmountCollected(e.target.value)}
@@ -194,8 +195,8 @@ function PaymentReceipt({ user, onLogout, onNavigate, currentPage = 'payment-rec
         </div>
 
         <div className="receipt-actions">
-          <button 
-            className="btn-primary" 
+          <button
+            className="btn-primary"
             onClick={handleCreateReceipt}
             disabled={!selectedAgency || !amountCollected}
           >

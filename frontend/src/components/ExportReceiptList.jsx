@@ -2,70 +2,7 @@ import React, { useMemo, useState } from "react";
 import MasterLayout from "./MasterLayout";
 import "../App.css";
 
-const receiptsMock = [
-  {
-    id: 1,
-    code: "EXP-2024-005",
-    agency: "Silver Moon Supplies",
-    date: "2024-05-03",
-    total: 5000,
-    items: 3,
-    itemsDetails: [
-      { no: 1, product: "Product A", unit: "Box", quantity: 10, unitPrice: 200, amount: 2000 },
-      { no: 2, product: "Product B", unit: "Carton", quantity: 10, unitPrice: 150, amount: 1500 },
-      { no: 3, product: "Product C", unit: "Box", quantity: 10, unitPrice: 150, amount: 1500 },
-    ],
-  },
-  {
-    id: 2,
-    code: "EXP-2024-004",
-    agency: "Blue Ocean Distributors",
-    date: "2024-04-30",
-    total: 20000,
-    items: 8,
-    itemsDetails: [
-      { no: 1, product: "Product A", unit: "Box", quantity: 50, unitPrice: 200, amount: 10000 },
-      { no: 2, product: "Product B", unit: "Carton", quantity: 25, unitPrice: 200, amount: 5000 },
-      { no: 3, product: "Product C", unit: "Box", quantity: 20, unitPrice: 250, amount: 5000 },
-    ],
-  },
-  {
-    id: 3,
-    code: "EXP-2024-003",
-    agency: "Golden Star Trading Co.",
-    date: "2024-04-27",
-    total: 15000,
-    items: 3,
-    itemsDetails: [
-      { no: 1, product: "Product A", unit: "Box", quantity: 50, unitPrice: 200, amount: 10000 },
-      { no: 2, product: "Product B", unit: "Carton", quantity: 20, unitPrice: 250, amount: 5000 },
-    ],
-  },
-  {
-    id: 4,
-    code: "EXP-2024-002",
-    agency: "Red Dragon Imports",
-    date: "2024-04-01",
-    total: 1500,
-    items: 1,
-    itemsDetails: [
-      { no: 1, product: "Product A", unit: "Box", quantity: 15, unitPrice: 100, amount: 1500 },
-    ],
-  },
-  {
-    id: 5,
-    code: "EXP-2024-001",
-    agency: "Sunset Trading Hub",
-    date: "2024-03-01",
-    total: 9500,
-    items: 2,
-    // Match the sample screenshot: 50 * 100 + 30 * 150 = 9,500
-    itemsDetails: [
-      { no: 1, product: "Product A", unit: "Box", quantity: 50, unitPrice: 100, amount: 5000 },
-      { no: 2, product: "Product B", unit: "Carton", quantity: 30, unitPrice: 150, amount: 4500 },
-    ],
-  },
-];
+import { getExportReceipts, getExportReceiptDetail } from "../services/mockApi";
 
 function ExportReceiptList({ user, onLogout, onNavigate }) {
   const [searchCode, setSearchCode] = useState("");
@@ -74,22 +11,45 @@ function ExportReceiptList({ user, onLogout, onNavigate }) {
   const [toDate, setToDate] = useState("");
   const [selectedReceipt, setSelectedReceipt] = useState(null);
 
+  const [receipts, setReceipts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    getExportReceipts().then(data => {
+      setReceipts(data);
+      setLoading(false);
+    });
+  }, []);
+
   const agencies = useMemo(
-    () => ["All Agencies", ...Array.from(new Set(receiptsMock.map((r) => r.agency)))],
-    []
+    () => ["All Agencies", ...Array.from(new Set(receipts.map((r) => r.agencyName)))],
+    [receipts]
   );
 
   const filteredReceipts = useMemo(() => {
-    return receiptsMock.filter((r) => {
+    return receipts.filter((r) => {
       const matchCode =
-        !searchCode || r.code.toLowerCase().includes(searchCode.toLowerCase());
+        !searchCode || r.receiptCode.toLowerCase().includes(searchCode.toLowerCase());
       const matchAgency =
-        agencyFilter === "All Agencies" || r.agency === agencyFilter;
+        agencyFilter === "All Agencies" || r.agencyName === agencyFilter;
       const matchFrom = !fromDate || new Date(r.date) >= new Date(fromDate);
       const matchTo = !toDate || new Date(r.date) <= new Date(toDate);
       return matchCode && matchAgency && matchFrom && matchTo;
     });
-  }, [searchCode, agencyFilter, fromDate, toDate]);
+  }, [receipts, searchCode, agencyFilter, fromDate, toDate]);
+
+  const handleRowClick = async (receipt) => {
+    try {
+      if (receipt._id) {
+        const detail = await getExportReceiptDetail(receipt._id);
+        setSelectedReceipt({ ...receipt, itemsDetails: detail.items });
+      } else {
+        setSelectedReceipt(receipt);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   return (
     <MasterLayout
@@ -201,15 +161,15 @@ function ExportReceiptList({ user, onLogout, onNavigate }) {
             <tbody>
               {filteredReceipts.map((r, index) => (
                 <tr
-                  key={r.id}
+                  key={r._id || index}
                   className="clickable-row"
-                  onClick={() => setSelectedReceipt(r)}
+                  onClick={() => handleRowClick(r)}
                 >
                   <td>{index + 1}</td>
-                  <td>{r.code}</td>
-                  <td>{r.agency}</td>
+                  <td>{r.receiptCode}</td>
+                  <td>{r.agencyName}</td>
                   <td>{new Date(r.date).toLocaleDateString("en-GB")}</td>
-                  <td>${r.total.toLocaleString()}.00</td>
+                  <td>${r.totalAmount.toLocaleString()}.00</td>
                   <td>{r.items} items</td>
                 </tr>
               ))}
@@ -243,9 +203,9 @@ function ExportReceiptList({ user, onLogout, onNavigate }) {
               <div className="receipt-detail-info-grid">
                 <div className="receipt-detail-card">
                   <div className="info-label">Receipt ID</div>
-                  <div className="info-value">{selectedReceipt.code}</div>
+                  <div className="info-value">{selectedReceipt.receiptCode}</div>
                   <div className="info-label" style={{ marginTop: 16 }}>Agency Name</div>
-                  <div className="info-value">{selectedReceipt.agency}</div>
+                  <div className="info-value">{selectedReceipt.agencyName}</div>
                 </div>
                 <div className="receipt-detail-card">
                   <div className="info-label">Date Created</div>
@@ -254,7 +214,7 @@ function ExportReceiptList({ user, onLogout, onNavigate }) {
                   </div>
                   <div className="info-label" style={{ marginTop: 16 }}>Total Amount</div>
                   <div className="info-value total-value">
-                    ${selectedReceipt.total.toLocaleString()}.00
+                    ${selectedReceipt.totalAmount.toLocaleString()}.00
                   </div>
                 </div>
               </div>
@@ -274,10 +234,10 @@ function ExportReceiptList({ user, onLogout, onNavigate }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {(selectedReceipt.itemsDetails || []).map((item) => (
-                      <tr key={item.no}>
-                        <td>{item.no}</td>
-                        <td>{item.product}</td>
+                    {(selectedReceipt.itemsDetails || []).map((item, idx) => (
+                      <tr key={idx}>
+                        <td>{idx + 1}</td>
+                        <td>{item.productName}</td>
                         <td>{item.unit}</td>
                         <td>{item.quantity}</td>
                         <td>${item.unitPrice.toLocaleString()}.00</td>
@@ -289,7 +249,7 @@ function ExportReceiptList({ user, onLogout, onNavigate }) {
                         <strong>Total Amount:</strong>
                       </td>
                       <td>
-                        <strong>${selectedReceipt.total.toLocaleString()}.00</strong>
+                        <strong>${selectedReceipt.totalAmount.toLocaleString()}.00</strong>
                       </td>
                     </tr>
                   </tbody>

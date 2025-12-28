@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import MasterLayout from "./MasterLayout";
 import "../App.css";
-import { getAgencies, updateAgency, getProducts, unitsList } from "../services/mockApi";
+import { getAgencies, getProducts, createExportReceipt, unitsList } from "../services/mockApi";
 
 function ExportReceipt({ user, onLogout, onNavigate, currentPage = 'export-receipt' }) {
   const [agencies, setAgencies] = useState([]);
@@ -19,14 +19,8 @@ function ExportReceipt({ user, onLogout, onNavigate, currentPage = 'export-recei
     ]).then(([agencyList, productList]) => {
       setAgencies(agencyList);
       setSelectedAgency(agencyList[0] || null);
-
-      // Handle product list whether it's strings or objects
       if (productList && productList.length > 0) {
-        if (typeof productList[0] === 'object') {
-          setProductsList(productList.map(p => p.name));
-        } else {
-          setProductsList(productList);
-        }
+        setProductsList(productList);
       }
     });
 
@@ -41,8 +35,9 @@ function ExportReceipt({ user, onLogout, onNavigate, currentPage = 'export-recei
     const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
     setProducts([...products, {
       id: newId,
-      product: "Product A",
-      unit: "Box",
+      productId: "",
+      product: "",
+      unit: "Box", // Default or empty
       quantity: 1,
       unitPrice: 0,
       amount: 0
@@ -56,8 +51,22 @@ function ExportReceipt({ user, onLogout, onNavigate, currentPage = 'export-recei
   const handleProductChange = (id, field, value) => {
     setProducts(products.map(p => {
       if (p.id === id) {
-        const updated = { ...p, [field]: value };
-        if (field === 'quantity' || field === 'unitPrice') {
+        let updated = { ...p };
+
+        if (field === 'productId') {
+          const selectedProd = productsList.find(item => item._id === value);
+          if (selectedProd) {
+            updated.productId = selectedProd._id;
+            updated.product = selectedProd.name;
+            updated.unit = selectedProd.unit;
+            updated.unitPrice = selectedProd.unitPrice;
+            updated.amount = updated.quantity * selectedProd.unitPrice;
+          }
+        } else {
+          updated[field] = value;
+        }
+
+        if (field === 'quantity' || field === 'unitPrice' || field === 'productId') {
           updated.amount = updated.quantity * updated.unitPrice;
         }
         return updated;
@@ -70,16 +79,37 @@ function ExportReceipt({ user, onLogout, onNavigate, currentPage = 'export-recei
   const newDebt = selectedAgency ? (selectedAgency.debt || 0) + totalAmount : 0;
   const debtLimit = selectedAgency?.type === "Type 1" ? 20000 : 50000; // theo QĐ2
 
-  const handleCreateReceipt = () => {
+  const handleCreateReceipt = async () => {
     if (!selectedAgency) return;
-    alert(`Export Receipt Created!\nAgency: ${selectedAgency.name}\nTotal Amount: $${totalAmount.toFixed(2)}`);
-    updateAgency(selectedAgency.id, { debt: newDebt }).then(() => {
-      getAgencies().then((list) => {
-        setAgencies(list);
-        const updated = list.find((a) => a.id === selectedAgency.id);
-        setSelectedAgency(updated || list[0] || null);
-      });
-    });
+
+    try {
+      const payload = {
+        agencyId: selectedAgency.id || selectedAgency._id,
+        date: receiptDate,
+        items: products.map(p => ({
+          productId: p.productId,
+          quantity: p.quantity,
+          unitPrice: p.unitPrice
+        }))
+      };
+
+      await createExportReceipt(payload);
+
+      alert(`Export Receipt Created for ${selectedAgency.name}!`);
+
+      // Refresh agencies to update debt
+      const list = await getAgencies();
+      setAgencies(list);
+      // Re-select current agency
+      const updated = list.find((a) => (a.id === selectedAgency.id || a._id === selectedAgency._id));
+      setSelectedAgency(updated || list[0] || null);
+
+      // Reset form or navigate? Maybe keep it open.
+      setProducts([{ id: 1, productId: "", product: "", unit: "Box", quantity: 1, unitPrice: 0, amount: 0 }]);
+
+    } catch (error) {
+      alert("Failed to create receipt: " + error.message);
+    }
   };
 
   const handleCancel = () => {
@@ -178,12 +208,13 @@ function ExportReceipt({ user, onLogout, onNavigate, currentPage = 'export-recei
                     <td className="text-center">{index + 1}</td>
                     <td>
                       <select
-                        value={product.product}
-                        onChange={(e) => handleProductChange(product.id, 'product', e.target.value)}
+                        value={product.productId || ""}
+                        onChange={(e) => handleProductChange(product.id, 'productId', e.target.value)}
                         className="table-select"
                       >
+                        <option value="" disabled>Select Product</option>
                         {productsList.map(p => (
-                          <option key={p} value={p}>{p}</option>
+                          <option key={p._id} value={p._id}>{p.name}</option>
                         ))}
                       </select>
                     </td>

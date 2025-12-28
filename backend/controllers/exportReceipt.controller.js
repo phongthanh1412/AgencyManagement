@@ -166,8 +166,8 @@ exports.createExportReceipt = async (req, res) => {
     const msg = error.message || "Server error";
     const status = msg === "Agency not found" ? 404
       : msg.startsWith("Invalid") ? 400
-      : msg.includes("Exceed") ? 400
-      : 500;
+        : msg.includes("Exceed") ? 400
+          : 500;
 
     return res.status(status).json({ message: msg });
   } finally {
@@ -178,12 +178,13 @@ exports.createExportReceipt = async (req, res) => {
 exports.getExportReceipts = async (req, res) => {
   try {
     const receipts = await ExportReceipt.find()
-      .select("receiptCode agencyName date totalAmount items")
+      .select("receiptCode agencyId agencyName date totalAmount items")
       .sort({ date: -1 });
 
     const result = receipts.map(r => ({
       _id: r._id,
       receiptCode: r.receiptCode,
+      agencyId: r.agencyId,
       agencyName: r.agencyName,
       date: r.date,
       totalAmount: r.totalAmount,
