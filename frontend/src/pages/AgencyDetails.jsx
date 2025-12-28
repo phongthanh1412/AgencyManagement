@@ -106,8 +106,8 @@ function AgencyDetails({ user, agency, onLogout, onNavigate, onEdit }) {
               <div className="agency-details-block">
                 <div className="agency-details-label">Received Date</div>
                 <div className="agency-details-value">
-                  {agency.receivedDate
-                    ? new Date(agency.receivedDate).toLocaleDateString("en-GB")
+                  {agency.receiptDate
+                    ? new Date(agency.receiptDate).toLocaleDateString("en-GB")
                     : "—"}
                 </div>
               </div>

@@ -52,7 +52,9 @@ class AgencyService {
       phone: a.phone,
       currentDebt: a.currentDebt,
       maxDebt: a.typeId?.maxDebt || 0,
-      receiptDate: a.receiptDate
+      receiptDate: a.receiptDate,
+      email: a.email,
+      address: a.address
     }));
 
     return result;
