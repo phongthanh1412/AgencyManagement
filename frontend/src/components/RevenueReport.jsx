@@ -26,7 +26,7 @@ export default function RevenueReport({ user, onLogout, onNavigate }) {
   }, [receipts, fromDate, toDate]);
 
   const summary = useMemo(() => {
-    const totalRevenue = filteredReceipts.reduce((s, r) => s + (r.total || 0), 0);
+    const totalRevenue = filteredReceipts.reduce((s, r) => s + (r.totalAmount || 0), 0);
     const totalReceipts = filteredReceipts.length;
     const avgPerReceipt = totalReceipts ? Math.round(totalRevenue / totalReceipts) : 0;
     return { totalRevenue, totalReceipts, avgPerReceipt };
@@ -35,10 +35,10 @@ export default function RevenueReport({ user, onLogout, onNavigate }) {
   const aggByAgency = useMemo(() => {
     const map = new Map();
     filteredReceipts.forEach((r) => {
-      map.set(r.agencyId, (map.get(r.agencyId) || 0) + (r.total || 0));
+      map.set(r.agencyId, (map.get(r.agencyId) || 0) + (r.totalAmount || 0));
     });
     return Array.from(map.entries()).map(([agencyId, total]) => {
-      const agency = agencies.find((a) => a.id === agencyId);
+      const agency = agencies.find((a) => a._id === agencyId);
       return { agency: agency?.name || `Agency ${agencyId}`, total };
     });
   }, [filteredReceipts, agencies]);
@@ -52,10 +52,10 @@ export default function RevenueReport({ user, onLogout, onNavigate }) {
     const mapTotal = new Map();
     filteredReceipts.forEach((r) => {
       mapCount.set(r.agencyId, (mapCount.get(r.agencyId) || 0) + 1);
-      mapTotal.set(r.agencyId, (mapTotal.get(r.agencyId) || 0) + (r.total || 0));
+      mapTotal.set(r.agencyId, (mapTotal.get(r.agencyId) || 0) + (r.totalAmount || 0));
     });
     const rows = Array.from(mapTotal.entries()).map(([agencyId, total]) => {
-      const agency = agencies.find((a) => a.id === agencyId);
+      const agency = agencies.find((a) => a._id === agencyId);
       const slips = mapCount.get(agencyId) || 0;
       const pct = summary.totalRevenue ? (total / summary.totalRevenue) * 100 : 0;
       return {
@@ -121,7 +121,7 @@ export default function RevenueReport({ user, onLogout, onNavigate }) {
               />
               <span className="date-input-icon">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="#94a3b8">
-                  <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H5V9h14v9z"/>
+                  <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H5V9h14v9z" />
                 </svg>
               </span>
             </div>
@@ -147,7 +147,7 @@ export default function RevenueReport({ user, onLogout, onNavigate }) {
               />
               <span className="date-input-icon">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="#94a3b8">
-                  <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H5V9h14v9z"/>
+                  <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H5V9h14v9z" />
                 </svg>
               </span>
             </div>
