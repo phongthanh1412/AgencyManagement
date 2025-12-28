@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import MasterLayout from "./MasterLayout";
 import "../App.css";
-import { updateAgency, deleteAgency } from "../services/mockApi";
+import { updateAgency, deleteAgency, getAgencyTypes } from "../services/mockApi";
 
 function EditAgency({ user, agency, onLogout, onNavigate }) {
   const isAdmin = (user?.role || "").toLowerCase() === "admin";
@@ -17,22 +17,34 @@ function EditAgency({ user, agency, onLogout, onNavigate }) {
   });
   const [showSuccess, setShowSuccess] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [types, setTypes] = useState([]);
+
+  useEffect(() => {
+    getAgencyTypes().then(setTypes).catch(console.error);
+  }, []);
 
   useEffect(() => {
     if (agency) {
+      let foundTypeId = agency.typeId?._id || agency.typeId || "";
+
+      // If foundTypeId is empty or just a name (length < 24 usually or check against types), try to find by name
+      if ((!foundTypeId || !types.some(t => t._id === foundTypeId)) && agency.type) {
+        const found = types.find(t => t.name === agency.type);
+        if (found) foundTypeId = found._id;
+      }
+
       setFormData({
-        id: agency.id,
+        id: agency._id || agency.id,
         name: agency.name || "",
-        type: agency.type === "Type 1" || agency.type === "1" ? "1" :
-              agency.type === "Type 2" || agency.type === "2" ? "2" : agency.type || "",
+        type: foundTypeId,
         phone: agency.phone || "",
         email: agency.email || "",
         address: agency.address || "",
-        district: (agency.district || "").replace("District ", "") || "",
+        district: agency.district || "",
         receivedDate: agency.receivedDate || "",
       });
     }
-  }, [agency]);
+  }, [agency, types]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -46,8 +58,8 @@ function EditAgency({ user, agency, onLogout, onNavigate }) {
     const updatedAgency = {
       id: formData.id,
       name: formData.name,
-      type: formData.type === "1" ? "Type 1" : formData.type === "2" ? "Type 2" : formData.type,
-      district: formData.district ? `District ${formData.district}` : "",
+      typeId: formData.type, // ID
+      district: Number(formData.district), // Ensure district is a number
       phone: formData.phone,
       email: formData.email,
       address: formData.address,
@@ -113,127 +125,128 @@ function EditAgency({ user, agency, onLogout, onNavigate }) {
 
       <div className="receipt-card">
         <h3 className="receipt-section-title">Agency Information</h3>
-        
+
         {!isAdmin ? (
           <div style={{ padding: "12px 0", color: "#ef4444", fontWeight: 600 }}>
             You do not have permission to edit agencies.
           </div>
         ) : (
-        <form onSubmit={handleSubmit}>
-          <div className="receipt-info-grid">
-            <div className="input-group">
-              <label>Agency Name <span className="required">*</span></label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Enter agency name"
-                required
-              />
-            </div>
-
-            <div className="input-group">
-              <label>Type <span className="required">*</span></label>
-              <select
-                name="type"
-                value={formData.type}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Select type</option>
-                <option value="1">Type 1</option>
-                <option value="2">Type 2</option>
-              </select>
-            </div>
-
-            <div className="input-group">
-              <label>Phone <span className="required">*</span></label>
-              <input
-                type="text"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                placeholder="(555) 123-4567"
-                required
-              />
-            </div>
-
-            <div className="input-group">
-              <label>Email</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="contact@example.com"
-              />
-            </div>
-
-            <div className="input-group">
-              <label>Address</label>
-              <input
-                type="text"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                placeholder="Enter address"
-              />
-            </div>
-
-            <div className="input-group">
-              <label>District <span className="required">*</span></label>
-              <select
-                name="district"
-                value={formData.district}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Select district</option>
-                {Array.from({ length: 20 }, (_, i) => (
-                  <option key={i + 1} value={i + 1}>
-                    District {i + 1}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="input-group">
-              <label>Received Date <span className="required">*</span></label>
-              <div className="date-input-wrapper" onClick={(e) => {
-                const input = e.currentTarget.querySelector('input[type="date"]');
-                if (input && input.showPicker) {
-                  input.showPicker();
-                } else {
-                  input?.focus();
-                }
-              }}>
+          <form onSubmit={handleSubmit}>
+            <div className="receipt-info-grid">
+              <div className="input-group">
+                <label>Agency Name <span className="required">*</span></label>
                 <input
-                  type="date"
-                  className="date-input"
-                  name="receivedDate"
-                  value={formData.receivedDate}
+                  type="text"
+                  name="name"
+                  value={formData.name}
                   onChange={handleChange}
+                  placeholder="Enter agency name"
                   required
                 />
-                <span className="date-input-icon">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#94a3b8">
-                    <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H5V9h14v9z"/>
-                  </svg>
-                </span>
+              </div>
+
+              <div className="input-group">
+                <label>Type <span className="required">*</span></label>
+                <select
+                  name="type"
+                  value={formData.type}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">Select type</option>
+                  {types.map(t => (
+                    <option key={t._id} value={t._id}>{t.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="input-group">
+                <label>Phone <span className="required">*</span></label>
+                <input
+                  type="text"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="(555) 123-4567"
+                  required
+                />
+              </div>
+
+              <div className="input-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="contact@example.com"
+                />
+              </div>
+
+              <div className="input-group">
+                <label>Address</label>
+                <input
+                  type="text"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  placeholder="Enter address"
+                />
+              </div>
+
+              <div className="input-group">
+                <label>District <span className="required">*</span></label>
+                <select
+                  name="district"
+                  value={formData.district}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">Select district</option>
+                  {Array.from({ length: 20 }, (_, i) => (
+                    <option key={i + 1} value={i + 1}>
+                      District {i + 1}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="input-group">
+                <label>Received Date <span className="required">*</span></label>
+                <div className="date-input-wrapper" onClick={(e) => {
+                  const input = e.currentTarget.querySelector('input[type="date"]');
+                  if (input && input.showPicker) {
+                    input.showPicker();
+                  } else {
+                    input?.focus();
+                  }
+                }}>
+                  <input
+                    type="date"
+                    className="date-input"
+                    name="receivedDate"
+                    value={formData.receivedDate}
+                    onChange={handleChange}
+                    required
+                  />
+                  <span className="date-input-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="#94a3b8">
+                      <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H5V9h14v9z" />
+                    </svg>
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="receipt-actions">
-            <button type="submit" className="btn-primary">
-              Update Agency
-            </button>
-            <button type="button" className="btn-secondary" onClick={() => onNavigate('agency')}>
-              Cancel
-            </button>
-          </div>
-        </form>
+            <div className="receipt-actions">
+              <button type="submit" className="btn-primary">
+                Update Agency
+              </button>
+              <button type="button" className="btn-secondary" onClick={() => onNavigate('agency')}>
+                Cancel
+              </button>
+            </div>
+          </form>
         )}
       </div>
 

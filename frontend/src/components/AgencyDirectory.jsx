@@ -40,14 +40,14 @@ function AgencyDirectory({ user, onLogout, onNavigate, onEditAgency, onViewAgenc
 
   const handleDelete = (agency) => {
     if (!isAdmin) return;
-    setDeleteId(agency.id);
+    setDeleteId(agency._id);
     setDeleteName(agency.name);
   };
 
   const confirmDelete = () => {
     if (!deleteId) return;
     deleteAgency(deleteId).then(() => {
-      setAgencies((prev) => prev.filter((a) => a.id !== deleteId));
+      setAgencies((prev) => prev.filter((a) => a._id !== deleteId));
     });
     setDeleteId(null);
     setDeleteName("");
@@ -142,7 +142,7 @@ function AgencyDirectory({ user, onLogout, onNavigate, onEditAgency, onViewAgenc
             </thead>
             <tbody>
               {filteredAgencies.map((a, index) => (
-                <tr key={a.id}>
+                <tr key={a._id}>
                   <td>{index + 1}</td>
                   <td
                     className="agency-name agency-link-cell"
@@ -154,8 +154,8 @@ function AgencyDirectory({ user, onLogout, onNavigate, onEditAgency, onViewAgenc
                   <td>{a.type}</td>
                   <td>{a.district}</td>
                   <td>{a.phone}</td>
-                  <td className={a.debt > 30000 ? "agency-debt-high" : ""}>
-                    ${a.debt.toLocaleString()}.00
+                  <td className={a.currentDebt > 30000 ? "agency-debt-high" : ""}>
+                    ${a.currentDebt.toLocaleString()}.00
                   </td>
                   <td>
                     {new Date(a.receivedDate).toLocaleDateString("en-GB")}
@@ -170,7 +170,7 @@ function AgencyDirectory({ user, onLogout, onNavigate, onEditAgency, onViewAgenc
                         title="Update"
                       >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                          <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
                         </svg>
                       </button>
                       <button

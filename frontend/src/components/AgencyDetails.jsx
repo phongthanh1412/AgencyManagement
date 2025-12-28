@@ -21,9 +21,9 @@ function AgencyDetails({ user, agency, onLogout, onNavigate, onEdit }) {
     );
   }
 
-  const maxDebt = agency.type === "Type 2" ? 20000 : 50000;
-  const debt = agency.debt || 0;
-  const usage = Math.min(100, Math.round((debt / maxDebt) * 100));
+  const maxDebt = agency.maxDebt || 0;
+  const debt = agency.currentDebt || 0;
+  const usage = maxDebt > 0 ? Math.min(100, Math.round((debt / maxDebt) * 100)) : 0;
 
   const [activeTab, setActiveTab] = useState("export");
   const [exportReceipts, setExportReceipts] = useState([]);
@@ -31,12 +31,12 @@ function AgencyDetails({ user, agency, onLogout, onNavigate, onEdit }) {
   const [debtHistory, setDebtHistory] = useState([]);
 
   useEffect(() => {
-    if (agency?.id) {
-      getExportReceiptsByAgency(agency.id).then(setExportReceipts);
-      getPaymentReceiptsByAgency(agency.id).then(setPaymentReceipts);
-      getDebtHistoryByAgency(agency.id).then(setDebtHistory);
+    if (agency?._id) {
+      getExportReceiptsByAgency(agency._id).then(setExportReceipts);
+      getPaymentReceiptsByAgency(agency._id).then(setPaymentReceipts);
+      getDebtHistoryByAgency(agency._id).then(setDebtHistory);
     }
-  }, [agency?.id]);
+  }, [agency?._id]);
 
   return (
     <MasterLayout currentPage="agency" user={user} onLogout={onLogout} onNavigate={onNavigate}>
@@ -176,11 +176,11 @@ function AgencyDetails({ user, agency, onLogout, onNavigate, onEdit }) {
               </thead>
               <tbody>
                 {exportReceipts.map((r, index) => (
-                  <tr key={r.id}>
+                  <tr key={index}>
                     <td>{index + 1}</td>
-                    <td>{r.code}</td>
+                    <td>{r.receiptCode}</td>
                     <td>{new Date(r.date).toLocaleDateString("en-GB")}</td>
-                    <td>${r.total.toLocaleString()}.00</td>
+                    <td>${r.totalAmount.toLocaleString()}.00</td>
                     <td>{r.items} items</td>
                   </tr>
                 ))}
@@ -200,11 +200,11 @@ function AgencyDetails({ user, agency, onLogout, onNavigate, onEdit }) {
               </thead>
               <tbody>
                 {paymentReceipts.map((r, index) => (
-                  <tr key={r.id}>
+                  <tr key={index}>
                     <td>{index + 1}</td>
-                    <td>{r.code}</td>
+                    <td>{r.receiptCode}</td>
                     <td>{new Date(r.date).toLocaleDateString("en-GB")}</td>
-                    <td>${r.amount.toLocaleString()}.00</td>
+                    <td>${r.amountPaid.toLocaleString()}.00</td>
                   </tr>
                 ))}
               </tbody>
@@ -224,14 +224,14 @@ function AgencyDetails({ user, agency, onLogout, onNavigate, onEdit }) {
               </thead>
               <tbody>
                 {debtHistory.map((r, index) => (
-                  <tr key={r.id}>
+                  <tr key={index}>
                     <td>{index + 1}</td>
-                    <td>{r.code}</td>
+                    <td>{r.receiptCode}</td>
                     <td>{new Date(r.date).toLocaleDateString("en-GB")}</td>
-                    <td className={r.change > 0 ? "text-positive" : "text-negative"}>
-                      {r.change > 0
-                        ? `+$${r.change.toLocaleString()}.00`
-                        : `-$${Math.abs(r.change).toLocaleString()}.00`}
+                    <td className={r.changes > 0 ? "text-positive" : "text-negative"}>
+                      {r.changes > 0
+                        ? `+$${r.changes.toLocaleString()}.00`
+                        : `-$${Math.abs(r.changes).toLocaleString()}.00`}
                     </td>
                     <td>${r.debt.toLocaleString()}.00</td>
                   </tr>
