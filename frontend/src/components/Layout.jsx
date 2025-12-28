@@ -25,7 +25,7 @@ function Layout({ currentPage, user, onLogout, onNavigate, children }) {
               </svg>
             </div>
             <div className="user-info">
-              <div className="user-name">{user?.username || 'User'}</div>
+              <div className="user-name">{user?.fullName || user?.username || 'User'}</div>
               <div className="user-role">Role: {user?.role?.toUpperCase() || 'STAFF'}</div>
             </div>
             <button className="logout-btn" onClick={onLogout}>

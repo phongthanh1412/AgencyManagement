@@ -59,7 +59,7 @@ function PaymentReceipt({ user, onLogout, onNavigate, currentPage = 'payment-rec
   };
 
   const afterPayment = selectedAgency && amountCollected
-    ? selectedAgency.debt - parseFloat(amountCollected || 0)
+    ? (selectedAgency.currentDebt || 0) - parseFloat(amountCollected || 0)
     : 0;
 
   return (
@@ -89,8 +89,8 @@ function PaymentReceipt({ user, onLogout, onNavigate, currentPage = 'payment-rec
                 </svg>
                 {searchQuery && (
                   <div className="agency-dropdown">
-                    {agencies
-                      .filter(a => a.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                    {Array.isArray(agencies) && agencies
+                      .filter(a => a && typeof a.name === 'string' && a.name.toLowerCase().includes((searchQuery || "").toLowerCase()))
                       .map(agency => (
                         <div
                           key={agency.id}
@@ -98,9 +98,7 @@ function PaymentReceipt({ user, onLogout, onNavigate, currentPage = 'payment-rec
                           onClick={() => handleAgencySelect(agency)}
                         >
                           <div className="agency-dropdown-name">{agency.name}</div>
-                          <div className="agency-dropdown-debt">
-                            Current Debt: ${agency.debt.toLocaleString()}.00
-                          </div>
+
                         </div>
                       ))}
                   </div>
@@ -170,7 +168,7 @@ function PaymentReceipt({ user, onLogout, onNavigate, currentPage = 'payment-rec
               <div className="debt-summary-item">
                 <div className="debt-summary-label">Current Outstanding Debt</div>
                 <div className="debt-summary-amount current-debt">
-                  ${selectedAgency.debt.toLocaleString()}.00
+                  ${(selectedAgency.currentDebt || 0).toLocaleString()}.00
                 </div>
               </div>
               <div className="debt-summary-item">
@@ -199,7 +197,6 @@ function PaymentReceipt({ user, onLogout, onNavigate, currentPage = 'payment-rec
           <button
             className="btn-primary"
             onClick={handleCreateReceipt}
-            disabled={!selectedAgency || !amountCollected}
           >
             Create Receipt
           </button>

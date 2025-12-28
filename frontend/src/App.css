@@ -764,7 +764,7 @@ body {
   .debt-summary-row {
     grid-template-columns: 1fr;
   }
-  
+
   .debt-filter-row {
     grid-template-columns: 1fr;
   }
@@ -774,11 +774,11 @@ body {
   .sidebar {
     display: none;
   }
-  
+
   .debt-main {
     padding: 20px;
   }
-  
+
   .debt-header {
     flex-direction: column;
     align-items: flex-start;
@@ -990,13 +990,7 @@ body {
   cursor: not-allowed;
 }
 
-.receipt-summary {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  padding-top: 20px;
-  border-top: 2px solid #e2e8f0;
-}
+
 
 .summary-row {
   display: flex;
@@ -1067,6 +1061,9 @@ body {
   font-size: 16px;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-secondary:hover {
@@ -1085,7 +1082,7 @@ body {
   .receipt-info-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .agency-info-row {
     grid-template-columns: 1fr;
   }
@@ -1803,11 +1800,11 @@ body {
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .action-buttons {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .dashboard-main,
   .debt-main {
     padding: 24px;
@@ -1819,9 +1816,20 @@ body {
   color: #0ea5e9;
 }
 
-.summary-icon-green { background: #d1fae5; color: #10b981; }
-.summary-icon-blue { background: #dbeafe; color: #2563eb; }
-.summary-icon-purple { background: #ede9fe; color: #7c3aed; }
+.summary-icon-green {
+  background: #d1fae5;
+  color: #10b981;
+}
+
+.summary-icon-blue {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.summary-icon-purple {
+  background: #ede9fe;
+  color: #7c3aed;
+}
 
 .chart-card,
 .table-card {
@@ -2271,6 +2279,7 @@ body {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -2292,6 +2301,7 @@ body {
     transform: translateY(20px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -2414,6 +2424,7 @@ body {
   justify-content: flex-end;
   padding: 16px 24px 20px;
   border-top: 1px solid #e2e8f0;
+  height: 73px;
 }
 
 /* Confirmation Modal Styles */
@@ -2641,4 +2652,99 @@ body {
   background: #f8fafc;
   border-radius: 12px;
   border: 1px dashed #e2e8f0;
+}
+
+/* Delete Button for Tables */
+.delete-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.delete-btn:hover {
+  background: #fef2f2;
+  color: #dc2626;
+  transform: scale(1.05);
+}
+
+.delete-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Notifications */
+.notification {
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  animation: slideDown 0.3s ease;
+}
+
+.notification-success {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.notification-error {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Refined Receipt Summary */
+.receipt-summary {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 0;
+  border-top: 1px solid #e2e8f0;
+  margin-top: 24px;
+  gap: 20px;
+}
+
+.summary-left {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.summary-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.inline-notification {
+  padding: 8px 16px;
+  margin-bottom: 0;
+  font-size: 13px;
+  border-radius: 8px;
+  max-width: 400px;
 }

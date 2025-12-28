@@ -46,13 +46,6 @@ function AgencyDetails({ user, agency, onLogout, onNavigate, onEdit }) {
           <p>Complete information about the agency</p>
         </div>
         <div className="regulation-confirm-actions">
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={() => onNavigate("agency")}
-          >
-            Back
-          </button>
           {isAdmin && (
             <>
               <button
