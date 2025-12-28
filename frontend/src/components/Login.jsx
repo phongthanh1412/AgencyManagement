@@ -9,6 +9,7 @@ export default function Login({ onNavigate, onLogin }) {
     role: 'Staff',
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [status, setStatus] = useState({ type: '', message: '' });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -27,6 +28,7 @@ export default function Login({ onNavigate, onLogin }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setStatus({ type: '', message: '' });
 
     try {
       const response = await login({
@@ -52,7 +54,7 @@ export default function Login({ onNavigate, onLogin }) {
 
       onLogin(userData);
     } catch (error) {
-      alert('Login failed: ' + error.message);
+      setStatus({ type: 'error', message: 'Login failed: ' + error.message });
     }
   };
 
@@ -70,7 +72,7 @@ export default function Login({ onNavigate, onLogin }) {
         </div>
 
         <div className="auth-card">
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} autoComplete="off">
             <div className="input-group">
               <label>Email or Username</label>
               <input
@@ -79,6 +81,7 @@ export default function Login({ onNavigate, onLogin }) {
                 placeholder="Enter your email"
                 value={form.email}
                 onChange={handleChange}
+                autoComplete="off"
                 required
               />
             </div>
@@ -92,6 +95,7 @@ export default function Login({ onNavigate, onLogin }) {
                   placeholder="Enter your password"
                   value={form.password}
                   onChange={handleChange}
+                  autoComplete="new-password"
                   required
                 />
                 <span className="password-toggle-icon" onClick={togglePasswordVisibility}>
@@ -131,6 +135,19 @@ export default function Login({ onNavigate, onLogin }) {
             <button type="submit" className="submit-button">
               Login
             </button>
+            {status.message && (
+              <div style={{
+                padding: '10px',
+                marginTop: '15px',
+                marginBottom: '0',
+                borderRadius: '4px',
+                backgroundColor: status.type === 'success' ? '#dcfce7' : '#fee2e2',
+                color: status.type === 'success' ? '#166534' : '#991b1b',
+                textAlign: 'center'
+              }}>
+                {status.message}
+              </div>
+            )}
           </form>
 
           <div className="auth-footer">

@@ -77,7 +77,7 @@ export default function SignUp({ onNavigate }) {
 
         <div className="auth-card">
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} autoComplete="off">
             <div className="input-group">
               <label>Full Name <span className="required">*</span></label>
               <input
@@ -86,6 +86,7 @@ export default function SignUp({ onNavigate }) {
                 placeholder="Enter your full name"
                 value={form.fullName}
                 onChange={handleChange}
+                autoComplete="off"
                 required
               />
             </div>
@@ -98,6 +99,7 @@ export default function SignUp({ onNavigate }) {
                 placeholder="Enter your email address"
                 value={form.email}
                 onChange={handleChange}
+                autoComplete="off"
                 required
               />
             </div>
@@ -112,6 +114,7 @@ export default function SignUp({ onNavigate }) {
                   value={form.password}
                   onChange={handleChange}
                   minLength="6"
+                  autoComplete="new-password"
                   required
                 />
                 <span className="password-toggle-icon" onClick={togglePasswordVisibility}>
@@ -137,6 +140,7 @@ export default function SignUp({ onNavigate }) {
                   placeholder="Re-enter your password"
                   value={form.confirmPassword}
                   onChange={handleChange}
+                  autoComplete="new-password"
                   required
                 />
                 <span className="password-toggle-icon" onClick={toggleConfirmPasswordVisibility}>
