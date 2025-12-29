@@ -59,8 +59,8 @@ function EditAgency({ user, agency, onLogout, onNavigate }) {
     const updatedAgency = {
       id: formData.id,
       name: formData.name,
-      typeId: formData.type, // ID
-      district: Number(formData.district), // Ensure district is a number
+      typeId: formData.type, 
+      district: Number(formData.district), 
       phone: formData.phone,
       email: formData.email,
       address: formData.address,

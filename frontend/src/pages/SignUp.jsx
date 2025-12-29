@@ -43,7 +43,7 @@ export default function SignUp({ onNavigate }) {
 
     try {
       await register({
-        username: form.fullName.replace(/\s+/g, '').toLowerCase(), // Generate username from name or add field
+        username: form.fullName.replace(/\s+/g, '').toLowerCase(), 
         email: form.email,
         password: form.password,
         role: form.role,
@@ -52,7 +52,6 @@ export default function SignUp({ onNavigate }) {
 
       setStatus({ type: 'success', message: `Successfully registered as ${form.role}! Redirecting to login...` });
 
-      // Delay navigation so user sees the message
       setTimeout(() => {
         onNavigate('login');
       }, 2000);

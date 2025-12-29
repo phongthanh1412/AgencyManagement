@@ -32,13 +32,9 @@ export default function Login({ onNavigate, onLogin }) {
 
     try {
       const response = await login({
-        email: form.email, // Backend expects email or username? Backend auth.controller.js usually checks one. 
-        // If backend handles "email or username", fine. If not, might need adjustment.
-        // Assuming backend uses 'email' field for login or 'username'.
-        // The backend `auth.controller` likely expects `username` or `email`.
-        // Let's pass both or just username if it's the identifier.
-        // Original code extracted username.
-        username: form.email, // Attempt to use input as username
+        email: form.email,  
+        
+        username: form.email, 
         password: form.password
       });
 
@@ -161,10 +157,6 @@ export default function Login({ onNavigate, onLogin }) {
             </button>
           </div>
         </div>
-
-        {/* <div className="page-footer">
-          © 2025 Agency Management System
-        </div> */}
       </div>
     </div>
   );

@@ -79,7 +79,6 @@ function DebtReport({ user, onLogout, onNavigate }) {
               <option>Last 3 Months</option>
             </select>
           </div>
-          {/* Date inputs can be wired up for custom range in future */}
         </div>
         <div className="debt-summary-row">
           <div className="debt-summary debt-summary-total">

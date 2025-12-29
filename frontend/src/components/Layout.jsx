@@ -10,7 +10,6 @@ function Layout({ currentPage, user, onLogout, onNavigate, children }) {
       <main className="dashboard-main">
         <header className="dashboard-header">
           <div className="header-left">
-            {/* Page title and description will be provided by child components */}
           </div>
           <div className="dashboard-user">
             <div className="notification-icon">

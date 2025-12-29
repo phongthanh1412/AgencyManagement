@@ -52,7 +52,7 @@ function ExportReceipt({ user, onLogout, onNavigate, currentPage = 'export-recei
       id: newId,
       productId: "",
       product: "",
-      unit: "Box", // Default or empty
+      unit: "Box", 
       quantity: 1,
       unitPrice: 0,
       amount: 0
@@ -92,7 +92,7 @@ function ExportReceipt({ user, onLogout, onNavigate, currentPage = 'export-recei
 
   const totalAmount = products.reduce((sum, p) => sum + p.amount, 0);
   const newDebt = selectedAgency ? (selectedAgency.currentDebt || 0) + totalAmount : 0;
-  const debtLimit = selectedAgency?.type === "Type 1" ? 20000 : 50000; // theo QĐ2
+  const debtLimit = selectedAgency?.type === "Type 1" ? 20000 : 50000; 
 
   const handleCreateReceipt = async () => {
     setNotification(null);
@@ -119,8 +119,6 @@ function ExportReceipt({ user, onLogout, onNavigate, currentPage = 'export-recei
       // Re-select current agency
       const updated = list.find((a) => (a.id === selectedAgency.id || a._id === selectedAgency._id));
       setSelectedAgency(updated || list[0] || null);
-
-      // We no longer reset the products list here
 
     } catch (error) {
       setNotification({ type: 'error', message: "Failed to create receipt: " + error.message });

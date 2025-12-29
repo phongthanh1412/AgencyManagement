@@ -35,18 +35,8 @@ function AddAgency({ user, onLogout, onNavigate }) {
     }
     const newAgency = {
       name: formData.agencyName,
-      typeId: formData.type, // ID from select
+      typeId: formData.type, 
       district: Number(formData.district),
-      // Controller: district > regulation.maxDistrict. 
-      // Controller uses Number(district) in getAgencies filter, but createAgency stores strictly. 
-      // If controller stores as is, and compares, assumes Number. 
-      // AddAgency sets district "District X" in original code?
-      // "district: formData.district ? `District ${formData.district}` : "","
-      // Backend: "const count = await Agency.countDocuments({ district });"
-      // If backend expects Number or String "District X"? 
-      // "const regulation = await SystemRegulation.findOne(); if (district > regulation.maxDistrict)"
-      // This implies district is a number.
-      // So I should send a number.
       phone: formData.phone,
       email: formData.email,
       address: formData.address,
