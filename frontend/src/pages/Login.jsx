@@ -74,7 +74,7 @@ export default function Login({ onNavigate, onLogin }) {
         <div className="auth-card">
           <form onSubmit={handleSubmit} autoComplete="off">
             <div className="input-group">
-              <label>Email or Username</label>
+              <label>Email or Full Name</label>
               <input
                 type="text"
                 name="email"

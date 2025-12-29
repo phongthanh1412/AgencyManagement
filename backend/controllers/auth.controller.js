@@ -2,11 +2,12 @@ const authService = require("../services/auth.service");
 
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
-    const result = await authService.login(email, password);
+    const { email, username, fullName, password } = req.body;
+    const identifier = email || username || fullName;
+    const result = await authService.login(identifier, password);
     res.json(result);
   } catch (error) {
-    const status = error.message === "Invalid email or password" ? 401 : 500;
+    const status = error.message === "Invalid email, full name, or password" ? 401 : 500;
     res.status(status).json({ message: error.message });
   }
 };
@@ -19,8 +20,8 @@ exports.register = async (req, res) => {
   } catch (error) {
     const status =
       error.message === "Missing required fields" ||
-      error.message === "Invalid role" ||
-      error.message === "Email already exists"
+        error.message === "Invalid role" ||
+        error.message === "Email already exists"
         ? 400
         : 500;
     res.status(status).json({ message: error.message });

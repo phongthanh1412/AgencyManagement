@@ -61,7 +61,7 @@ export default function App() {
       <Route path="/login" element={<Login onNavigate={(path) => navigate(`/${path}`)} onLogin={handleLogin} />} />
       <Route path="/signup" element={<SignUp onNavigate={(path) => navigate(`/${path}`)} />} />
 
-      <Route path="/" element={<Navigate to={user ? "/general" : "/login"} replace />} />
+      <Route path="/" element={<Navigate to="/login" replace />} />
 
       <Route path="/general" element={
         <ProtectedRoute user={user}>

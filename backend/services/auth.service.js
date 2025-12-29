@@ -3,15 +3,17 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 class AuthService {
-  async login(email, password) {
-    const user = await User.findOne({ email });
+  async login(identifier, password) {
+    const user = await User.findOne({
+      $or: [{ email: identifier }, { fullName: identifier }]
+    });
     if (!user) {
       throw new Error("Invalid email or password");
     }
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
-      throw new Error("Invalid email or password");
+      throw new Error("Invalid email, full name, or password");
     }
 
     const token = jwt.sign(
