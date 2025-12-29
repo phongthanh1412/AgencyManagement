@@ -1,83 +1,126 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import MasterLayout from "../components/Layout";
 import "../App.css";
+import { getSystemRegulation, updateSystemRegulation } from "../services/systemRegulationService";
+import { getAgencyTypes, createAgencyType, updateAgencyType, deleteAgencyType } from "../services/agencyTypeService";
+import { getProducts, createProduct, updateProduct, deleteProduct } from "../services/productService";
 
 function SystemRegulation({ user, onLogout, onNavigate }) {
-  const [maxDistricts, setMaxDistricts] = useState(20);
-  const [maxAgenciesPerDistrict, setMaxAgenciesPerDistrict] = useState(4);
+  const [maxDistricts, setMaxDistricts] = useState(0);
+  const [maxAgenciesPerDistrict, setMaxAgenciesPerDistrict] = useState(0);
   const [editingDistrict, setEditingDistrict] = useState(false);
   const [editingAgencies, setEditingAgencies] = useState(false);
-  const [tempDistrict, setTempDistrict] = useState("20");
-  const [tempAgencies, setTempAgencies] = useState("4");
+  const [tempDistrict, setTempDistrict] = useState("");
+  const [tempAgencies, setTempAgencies] = useState("");
 
-  const [agencyTypes, setAgencyTypes] = useState([
-    { id: 1, name: "Type 1", maxDebt: 50000 },
-    { id: 2, name: "Type 2", maxDebt: 20000 },
-  ]);
+  const [agencyTypes, setAgencyTypes] = useState([]);
   const [editingType, setEditingType] = useState(null);
   const [showAddTypeForm, setShowAddTypeForm] = useState(false);
   const [newTypeName, setNewTypeName] = useState("");
   const [newTypeDebt, setNewTypeDebt] = useState("");
 
-  const [products, setProducts] = useState([
-    { id: 1, name: "Product A", unitType: "kg", unitPrice: 100 },
-    { id: 2, name: "Product B", unitType: "liter", unitPrice: 150 },
-    { id: 3, name: "Product C", unitType: "kg", unitPrice: 200 },
-    { id: 4, name: "Product D", unitType: "unit", unitPrice: 250 },
-    { id: 5, name: "Product E", unitType: "kg", unitPrice: 300 },
-  ]);
+  const [products, setProducts] = useState([]);
   const [editingProduct, setEditingProduct] = useState(null);
   const [showAddProduct, setShowAddProduct] = useState(false);
-  const [newProduct, setNewProduct] = useState({ name: "", unitType: "", unitPrice: "" });
+  const [newProduct, setNewProduct] = useState({ name: "", unit: "", unitPrice: "" });
   const [deleteTypeId, setDeleteTypeId] = useState(null);
   const [deleteProductId, setDeleteProductId] = useState(null);
 
-  const handleSaveDistrict = () => {
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const regulation = await getSystemRegulation();
+      if (regulation) {
+        setMaxDistricts(regulation.maxDistrict);
+        setMaxAgenciesPerDistrict(regulation.maxAgencyPerDistrict);
+        setTempDistrict(regulation.maxDistrict.toString());
+        setTempAgencies(regulation.maxAgencyPerDistrict.toString());
+      }
+
+      const types = await getAgencyTypes();
+      setAgencyTypes(types || []);
+
+      const prods = await getProducts();
+      setProducts(prods || []);
+    } catch (error) {
+      console.error("Failed to fetch system data:", error);
+    }
+  };
+
+  const handleSaveDistrict = async () => {
     const value = parseInt(tempDistrict);
     if (value > 0) {
-      setMaxDistricts(value);
-      setEditingDistrict(false);
+      try {
+        await updateSystemRegulation({
+          maxDistrict: value,
+          maxAgencyPerDistrict: maxAgenciesPerDistrict
+        });
+        setMaxDistricts(value);
+        setEditingDistrict(false);
+      } catch (error) {
+        alert(error.message);
+      }
     }
   };
 
-  const handleSaveAgencies = () => {
+  const handleSaveAgencies = async () => {
     const value = parseInt(tempAgencies);
     if (value > 0) {
-      setMaxAgenciesPerDistrict(value);
-      setEditingAgencies(false);
+      try {
+        await updateSystemRegulation({
+          maxDistrict: maxDistricts,
+          maxAgencyPerDistrict: value
+        });
+        setMaxAgenciesPerDistrict(value);
+        setEditingAgencies(false);
+      } catch (error) {
+        alert(error.message);
+      }
     }
   };
 
-  const handleAddAgencyType = () => {
+  const handleAddAgencyType = async () => {
     if (newTypeName && newTypeDebt) {
-      const newId = Math.max(...agencyTypes.map(t => t.id), 0) + 1;
-      setAgencyTypes([...agencyTypes, {
-        id: newId,
-        name: newTypeName,
-        maxDebt: parseFloat(newTypeDebt.replace(/[^0-9.]/g, ''))
-      }]);
-      setNewTypeName("");
-      setNewTypeDebt("");
-      setShowAddTypeForm(false);
+      try {
+        const newType = await createAgencyType({
+          name: newTypeName,
+          maxDebt: parseFloat(newTypeDebt.replace(/[^0-9.]/g, ''))
+        });
+        setAgencyTypes([...agencyTypes, newType]);
+        setNewTypeName("");
+        setNewTypeDebt("");
+        setShowAddTypeForm(false);
+      } catch (error) {
+        alert(error.message);
+      }
     }
   };
 
   const handleEditAgencyType = (type) => {
-    setEditingType(type.id);
+    setEditingType(type._id);
     setNewTypeName(type.name);
     setNewTypeDebt(type.maxDebt.toString());
   };
 
-  const handleSaveAgencyType = () => {
+  const handleSaveAgencyType = async () => {
     if (newTypeName && newTypeDebt) {
-      setAgencyTypes(agencyTypes.map(t =>
-        t.id === editingType
-          ? { ...t, name: newTypeName, maxDebt: parseFloat(newTypeDebt.replace(/[^0-9.]/g, '')) }
-          : t
-      ));
-      setEditingType(null);
-      setNewTypeName("");
-      setNewTypeDebt("");
+      try {
+        const updated = await updateAgencyType(editingType, {
+          name: newTypeName,
+          maxDebt: parseFloat(newTypeDebt.replace(/[^0-9.]/g, ''))
+        });
+        setAgencyTypes(agencyTypes.map(t =>
+          t._id === editingType ? updated : t
+        ));
+        setEditingType(null);
+        setNewTypeName("");
+        setNewTypeDebt("");
+      } catch (error) {
+        alert(error.message);
+      }
     }
   };
 
@@ -85,40 +128,56 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
     setDeleteTypeId(id);
   };
 
-  const confirmDeleteAgencyType = () => {
+  const confirmDeleteAgencyType = async () => {
     if (deleteTypeId) {
-      setAgencyTypes(agencyTypes.filter(t => t.id !== deleteTypeId));
-      setDeleteTypeId(null);
+      try {
+        await deleteAgencyType(deleteTypeId);
+        setAgencyTypes(agencyTypes.filter(t => t._id !== deleteTypeId));
+        setDeleteTypeId(null);
+      } catch (error) {
+        alert(error.message);
+      }
     }
   };
 
-  const handleAddProduct = () => {
-    if (newProduct.name && newProduct.unitType && newProduct.unitPrice) {
-      const newId = Math.max(...products.map(p => p.id), 0) + 1;
-      setProducts([...products, {
-        id: newId,
-        ...newProduct,
-        unitPrice: parseFloat(newProduct.unitPrice)
-      }]);
-      setNewProduct({ name: "", unitType: "", unitPrice: "" });
-      setShowAddProduct(false);
+  const handleAddProduct = async () => {
+    if (newProduct.name && newProduct.unit && newProduct.unitPrice) {
+      try {
+        const newP = await createProduct({
+          name: newProduct.name,
+          unit: newProduct.unit,
+          unitPrice: parseFloat(newProduct.unitPrice)
+        });
+        setProducts([...products, newP]);
+        setNewProduct({ name: "", unit: "", unitPrice: "" });
+        setShowAddProduct(false);
+      } catch (error) {
+        alert(error.message);
+      }
     }
   };
 
   const handleEditProduct = (product) => {
-    setEditingProduct(product.id);
-    setNewProduct({ name: product.name, unitType: product.unitType, unitPrice: product.unitPrice.toString() });
+    setEditingProduct(product._id);
+    setNewProduct({ name: product.name, unit: product.unit, unitPrice: product.unitPrice.toString() });
   };
 
-  const handleSaveProduct = () => {
-    if (newProduct.name && newProduct.unitType && newProduct.unitPrice) {
-      setProducts(products.map(p =>
-        p.id === editingProduct
-          ? { ...p, ...newProduct, unitPrice: parseFloat(newProduct.unitPrice) }
-          : p
-      ));
-      setEditingProduct(null);
-      setNewProduct({ name: "", unitType: "", unitPrice: "" });
+  const handleSaveProduct = async () => {
+    if (newProduct.name && newProduct.unit && newProduct.unitPrice) {
+      try {
+        const updated = await updateProduct(editingProduct, {
+          name: newProduct.name,
+          unit: newProduct.unit,
+          unitPrice: parseFloat(newProduct.unitPrice)
+        });
+        setProducts(products.map(p =>
+          p._id === editingProduct ? updated : p
+        ));
+        setEditingProduct(null);
+        setNewProduct({ name: "", unit: "", unitPrice: "" });
+      } catch (error) {
+        alert(error.message);
+      }
     }
   };
 
@@ -126,10 +185,15 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
     setDeleteProductId(id);
   };
 
-  const confirmDeleteProduct = () => {
+  const confirmDeleteProduct = async () => {
     if (deleteProductId) {
-      setProducts(products.filter(p => p.id !== deleteProductId));
-      setDeleteProductId(null);
+      try {
+        await deleteProduct(deleteProductId);
+        setProducts(products.filter(p => p._id !== deleteProductId));
+        setDeleteProductId(null);
+      } catch (error) {
+        alert(error.message);
+      }
     }
   };
 
@@ -150,7 +214,7 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
             </p>
           </div>
         </div>
-        
+
         <div className="regulation-fields-horizontal">
           <div className="regulation-field-item-horizontal">
             <label className="regulation-field-label">Maximum Districts</label>
@@ -161,7 +225,7 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
                 setTempDistrict(maxDistricts.toString());
               }} title="Edit">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                  <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
                 </svg>
               </button>
             </div>
@@ -176,7 +240,7 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
                 setTempAgencies(maxAgenciesPerDistrict.toString());
               }} title="Edit">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                  <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
                 </svg>
               </button>
             </div>
@@ -196,7 +260,7 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
                   setTempDistrict(maxDistricts.toString());
                 }}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
                   </svg>
                 </button>
               </div>
@@ -222,7 +286,7 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
                 </button>
                 <button className="btn-primary" onClick={handleSaveDistrict}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: '6px' }}>
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                   </svg>
                   Save Changes
                 </button>
@@ -244,7 +308,7 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
                   setTempAgencies(maxAgenciesPerDistrict.toString());
                 }}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
                   </svg>
                 </button>
               </div>
@@ -270,7 +334,7 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
                 </button>
                 <button className="btn-primary" onClick={handleSaveAgencies}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: '6px' }}>
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                   </svg>
                   Save Changes
                 </button>
@@ -291,7 +355,7 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
           </div>
           <button className="regulation-add-btn" onClick={() => setShowAddTypeForm(!showAddTypeForm)}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
             </svg>
             <span>Add New Agency Type</span>
           </button>
@@ -312,7 +376,7 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
                   setNewTypeDebt("");
                 }}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
                   </svg>
                 </button>
               </div>
@@ -349,7 +413,7 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
                 </button>
                 <button className="btn-primary" onClick={handleAddAgencyType}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: '6px' }}>
-                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
                   </svg>
                   Add Type
                 </button>
@@ -373,7 +437,7 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
                   setNewTypeDebt("");
                 }}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
                   </svg>
                 </button>
               </div>
@@ -410,7 +474,7 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
                 </button>
                 <button className="btn-primary" onClick={handleSaveAgencyType}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: '6px' }}>
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                   </svg>
                   Save Changes
                 </button>
@@ -431,7 +495,7 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
               </thead>
               <tbody>
                 {agencyTypes.map((type) => (
-                  <tr key={type.id} className={editingType === type.id ? "regulation-row-editing" : ""}>
+                  <tr key={type._id} className={editingType === type._id ? "regulation-row-editing" : ""}>
                     <td>
                       <span className="regulation-table-text">{type.name}</span>
                     </td>
@@ -441,12 +505,12 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
                     <td className="regulation-table-actions">
                       <button className="regulation-action-btn regulation-action-edit" onClick={() => handleEditAgencyType(type)} title="Edit">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                          <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
                         </svg>
                       </button>
-                      <button className="regulation-action-btn regulation-action-delete" onClick={() => handleDeleteAgencyType(type.id)} title="Delete">
+                      <button className="regulation-action-btn regulation-action-delete" onClick={() => handleDeleteAgencyType(type._id)} title="Delete">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                          <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
                         </svg>
                       </button>
                     </td>
@@ -468,7 +532,7 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
           <div>
             <h3 className="regulation-section-title">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: '8px', verticalAlign: 'middle' }}>
-                <path d="M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3-1.05 0-1.96.54-2.5 1.35l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20v6z"/>
+                <path d="M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3-1.05 0-1.96.54-2.5 1.35l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20v6z" />
               </svg>
               Product Management
             </h3>
@@ -478,7 +542,7 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
           </div>
           <button className="regulation-add-btn" onClick={() => setShowAddProduct(!showAddProduct)}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
             </svg>
             <span>Add New Product</span>
           </button>
@@ -497,7 +561,7 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
                   setNewProduct({ name: "", unitType: "", unitPrice: "" });
                 }}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
                   </svg>
                 </button>
               </div>
@@ -516,13 +580,14 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
                   <div className="input-group">
                     <label>Unit Type <span className="required">*</span></label>
                     <select
-                      value={newProduct.unitType}
-                      onChange={(e) => setNewProduct({ ...newProduct, unitType: e.target.value })}
+                      value={newProduct.unit}
+                      onChange={(e) => setNewProduct({ ...newProduct, unit: e.target.value })}
                     >
                       <option value="">Select unit type</option>
                       <option value="kg">kg</option>
                       <option value="liter">liter</option>
                       <option value="unit">unit</option>
+                      <option value="box">box</option>
                     </select>
                   </div>
                   <div className="input-group">
@@ -547,7 +612,7 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
                 </button>
                 <button className="btn-primary" onClick={handleAddProduct}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: '6px' }}>
-                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
                   </svg>
                   Add Product
                 </button>
@@ -569,7 +634,7 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
                   setNewProduct({ name: "", unitType: "", unitPrice: "" });
                 }}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
                   </svg>
                 </button>
               </div>
@@ -588,13 +653,14 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
                   <div className="input-group">
                     <label>Unit Type <span className="required">*</span></label>
                     <select
-                      value={newProduct.unitType}
-                      onChange={(e) => setNewProduct({ ...newProduct, unitType: e.target.value })}
+                      value={newProduct.unit}
+                      onChange={(e) => setNewProduct({ ...newProduct, unit: e.target.value })}
                     >
                       <option value="">Select unit type</option>
                       <option value="kg">kg</option>
                       <option value="liter">liter</option>
                       <option value="unit">unit</option>
+                      <option value="box">box</option>
                     </select>
                   </div>
                   <div className="input-group">
@@ -619,7 +685,7 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
                 </button>
                 <button className="btn-primary" onClick={handleSaveProduct}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: '6px' }}>
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                   </svg>
                   Save Changes
                 </button>
@@ -641,12 +707,12 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
               </thead>
               <tbody>
                 {products.map((product) => (
-                  <tr key={product.id} className={editingProduct === product.id ? "regulation-row-editing" : ""}>
+                  <tr key={product._id} className={editingProduct === product._id ? "regulation-row-editing" : ""}>
                     <td>
                       <span className="regulation-table-text">{product.name}</span>
                     </td>
                     <td>
-                      <span className="regulation-table-text">{product.unitType}</span>
+                      <span className="regulation-table-text">{product.unit}</span>
                     </td>
                     <td>
                       <span className="regulation-table-text">${product.unitPrice.toLocaleString()}.00</span>
@@ -654,12 +720,12 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
                     <td className="regulation-table-actions">
                       <button className="regulation-action-btn regulation-action-edit" onClick={() => handleEditProduct(product)} title="Edit">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                          <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
                         </svg>
                       </button>
-                      <button className="regulation-action-btn regulation-action-delete" onClick={() => handleDeleteProduct(product.id)} title="Delete">
+                      <button className="regulation-action-btn regulation-action-delete" onClick={() => handleDeleteProduct(product._id)} title="Delete">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                          <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
                         </svg>
                       </button>
                     </td>
@@ -677,13 +743,13 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
 
       {/* Delete Confirmation Popup for Agency Type */}
       {deleteTypeId && (() => {
-        const typeToDelete = agencyTypes.find(t => t.id === deleteTypeId);
+        const typeToDelete = agencyTypes.find(t => t._id === deleteTypeId);
         return (
           <div className="regulation-modal-overlay" onClick={() => setDeleteTypeId(null)}>
             <div className="regulation-confirm-modal" onClick={(e) => e.stopPropagation()}>
               <div className="regulation-confirm-icon">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                 </svg>
               </div>
               <h3>Delete Agency Type</h3>
@@ -703,13 +769,13 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
 
       {/* Delete Confirmation Popup for Product */}
       {deleteProductId && (() => {
-        const productToDelete = products.find(p => p.id === deleteProductId);
+        const productToDelete = products.find(p => p._id === deleteProductId);
         return (
           <div className="regulation-modal-overlay" onClick={() => setDeleteProductId(null)}>
             <div className="regulation-confirm-modal" onClick={(e) => e.stopPropagation()}>
               <div className="regulation-confirm-icon">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                 </svg>
               </div>
               <h3>Delete Product</h3>

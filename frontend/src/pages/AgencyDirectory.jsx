@@ -158,7 +158,7 @@ function AgencyDirectory({ user, onLogout, onNavigate, onEditAgency, onViewAgenc
                     ${a.currentDebt.toLocaleString()}.00
                   </td>
                   <td>
-                    {new Date(a.receivedDate).toLocaleDateString("en-GB")}
+                    {new Date(a.receiptDate).toLocaleDateString("en-GB")}
                   </td>
                   {isAdmin && (
                     <td className="regulation-table-actions">

@@ -55,7 +55,7 @@ export const getPaymentReceiptsByAgency = async (agencyId) => {
 };
 
 export const getDebtHistoryByAgency = async (agencyId) => {
-  const response = await fetch(`${API_URL}/agencies/${agencyId}/debt-history`, {
+  const response = await fetch(`${API_URL}/agencies/${agencyId}/debt-histories`, {
     headers: getAuthHeaders(),
   });
   return handleResponse(response);
