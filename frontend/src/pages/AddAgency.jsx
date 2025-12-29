@@ -13,7 +13,7 @@ function AddAgency({ user, onLogout, onNavigate }) {
     email: "",
     address: "",
     district: "",
-    receivedDate: "",
+    receiptDate: "",
   });
   const [types, setTypes] = useState([]);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -36,7 +36,7 @@ function AddAgency({ user, onLogout, onNavigate }) {
     const newAgency = {
       name: formData.agencyName,
       typeId: formData.type, // ID from select
-      district: formData.district, // Just number or string? Backend expects number likely based on controller logic: district > maxDistrict (number comparison)
+      district: Number(formData.district),
       // Controller: district > regulation.maxDistrict. 
       // Controller uses Number(district) in getAgencies filter, but createAgency stores strictly. 
       // If controller stores as is, and compares, assumes Number. 
@@ -50,12 +50,14 @@ function AddAgency({ user, onLogout, onNavigate }) {
       phone: formData.phone,
       email: formData.email,
       address: formData.address,
-      receiptDate: formData.receivedDate || new Date().toISOString().slice(0, 10),
+      receiptDate: formData.receiptDate || new Date().toISOString().slice(0, 10),
     };
 
     createAgency(newAgency).then((created) => {
       setCreatedAgency(created);
       setShowSuccess(true);
+    }).catch(err => {
+      alert("Failed to create agency: " + err.message);
     });
   };
 
@@ -190,8 +192,8 @@ function AddAgency({ user, onLogout, onNavigate }) {
                   <input
                     type="date"
                     className="date-input"
-                    name="receivedDate"
-                    value={formData.receivedDate}
+                    name="receiptDate"
+                    value={formData.receiptDate}
                     onChange={handleChange}
                     required
                   />

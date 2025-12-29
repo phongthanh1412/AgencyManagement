@@ -140,11 +140,11 @@ class ReportService {
       const changes = changesMap.get(id) || 0;
       totalChanges += changes;
 
-      const beginningDebt = beginningDebtMap.has(id)
-        ? beginningDebtMap.get(id)
-        : Number(a.currentDebt) - changes;
+      // Use currentDebt as the source of truth for Ending Debt
+      const endingDebt = Number(a.currentDebt);
 
-      const endingDebt = beginningDebt + changes;
+      // Back-calculate Beginning Debt: Ending - Changes
+      const beginningDebt = endingDebt - changes;
 
       totalBeginningDebt += beginningDebt;
       totalEndingDebt += endingDebt;

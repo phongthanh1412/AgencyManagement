@@ -2439,6 +2439,12 @@ body {
   animation: slideUp 0.3s ease;
 }
 
+.regulation-confirm-modal .btn-primary,
+.regulation-confirm-modal .btn-secondary {
+  padding: 10px 24px;
+  font-size: 14px;
+}
+
 .regulation-confirm-icon {
   width: 64px;
   height: 64px;
@@ -2471,14 +2477,19 @@ body {
   justify-content: center;
 }
 
+.regulation-confirm-actions button {
+  padding: 10px 20px;
+  font-size: 14px;
+}
+
 .btn-danger {
-  padding: 14px 32px;
+  padding: 10px 24px;
   background: #ef4444;
   color: white;
   border: none;
   border-radius: 12px;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 14px;
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
