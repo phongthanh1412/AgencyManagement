@@ -108,25 +108,7 @@ export default function Login({ onNavigate, onLogin }) {
               </div>
             </div>
 
-            <div className="input-group">
-              <label>Login as</label>
-              <div className="role-switch">
-                <button
-                  type="button"
-                  className={`role-option ${form.role === 'Admin' ? 'active' : ''}`}
-                  onClick={() => handleRoleChange('Admin')}
-                >
-                  Admin
-                </button>
-                <button
-                  type="button"
-                  className={`role-option ${form.role === 'Staff' ? 'active' : ''}`}
-                  onClick={() => handleRoleChange('Staff')}
-                >
-                  Staff
-                </button>
-              </div>
-            </div>
+            
 
             <button type="submit" className="submit-button">
               Login
