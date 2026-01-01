@@ -3,6 +3,8 @@ import MasterLayout from "../components/Layout";
 import "../App.css";
 import { getAgencies } from '../services/agencyService';
 import { getExportReceipts } from '../services/exportReceiptService';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default function RevenueReport({ user, onLogout, onNavigate }) {
   const [period, setPeriod] = useState("This Month");
@@ -75,6 +77,84 @@ export default function RevenueReport({ user, onLogout, onNavigate }) {
     setShowReportModal(true);
   };
 
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+
+    // Add title
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Revenue Report - ' + period, 14, 20);
+
+    // Add subtitle
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Detailed revenue breakdown by agency', 14, 28);
+
+    // Add date range
+    doc.setFontSize(10);
+    doc.text('From: ' + (fromDate || 'start'), 14, 38);
+    doc.text('To: ' + (toDate || 'end'), 80, 38);
+
+    // Prepare table data
+    const tableData = breakdown.map(row => [
+      row.no,
+      row.agency,
+      row.slips,
+      '$' + row.total.toLocaleString() + '.00',
+      row.pct + '%'
+    ]);
+
+    // Add total row
+    tableData.push([
+      { content: 'Total', colSpan: 2, styles: { fontStyle: 'bold' } },
+      { content: summary.totalReceipts.toString(), styles: { fontStyle: 'bold' } },
+      { content: '$' + summary.totalRevenue.toLocaleString() + '.00', styles: { fontStyle: 'bold' } },
+      { content: '100%', styles: { fontStyle: 'bold' } }
+    ]);
+
+    // Add table
+    autoTable(doc, {
+      startY: 45,
+      head: [['NO.', 'AGENCY', 'NUMBER OF EXPORT SLIPS', 'TOTAL VALUE', 'PERCENTAGE']],
+      body: tableData,
+      theme: 'striped',
+      headStyles: {
+        fillColor: [37, 99, 235],
+        textColor: [255, 255, 255],
+        fontSize: 10,
+        fontStyle: 'bold'
+      },
+      bodyStyles: {
+        fontSize: 9
+      },
+      alternateRowStyles: {
+        fillColor: [248, 250, 252]
+      },
+      margin: { top: 45 }
+    });
+
+    // Add footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      doc.text(
+        'Generated on ' + new Date().toLocaleString(),
+        14,
+        doc.internal.pageSize.height - 10
+      );
+      doc.text(
+        'Page ' + i + ' of ' + pageCount,
+        doc.internal.pageSize.width - 30,
+        doc.internal.pageSize.height - 10
+      );
+    }
+
+    // Save PDF
+    doc.save('Revenue_Report_' + period.replace(/\s+/g, '_') + '_' + new Date().toISOString().split('T')[0] + '.pdf');
+  };
+
   return (
     <MasterLayout currentPage="revenue-report" user={user} onLogout={onLogout} onNavigate={onNavigate}>
       <div className="page-header">
@@ -85,11 +165,9 @@ export default function RevenueReport({ user, onLogout, onNavigate }) {
       <section className="debt-filters">
         <div className="debt-filters-header">
           <h3>Report Filters</h3>
-          {!isAdmin && (
-            <button className="debt-generate" onClick={handleGenerateReport}>
-              Generate Report
-            </button>
-          )}
+          <button className="debt-generate" onClick={handleGenerateReport}>
+            Generate Report
+          </button>
         </div>
         <div className="debt-filter-row">
           <div className="date-input-group">
@@ -314,7 +392,7 @@ export default function RevenueReport({ user, onLogout, onNavigate }) {
               </button>
               <button
                 className="btn-primary"
-                onClick={() => alert("Mock export PDF - frontend only")}
+                onClick={handleExportPDF}
               >
                 Export PDF
               </button>

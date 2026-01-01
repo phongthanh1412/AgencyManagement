@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import MasterLayout from "../components/Layout";
 import "../App.css";
 import { getDebtReport } from "../services/reportService";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const statusClass = {
   "High Risk": "debt-status-high",
@@ -46,6 +48,106 @@ function DebtReport({ user, onLogout, onNavigate }) {
     setShowReportModal(true);
   };
 
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+
+    // Add title
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Debt Report - ' + selectedPeriod, 14, 20);
+
+    // Add subtitle
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Detailed debt breakdown by agency', 14, 28);
+
+    // Add period
+    doc.setFontSize(10);
+    doc.text('Period: ' + selectedPeriod, 14, 38);
+
+    // Prepare table data
+    const tableData = agencies.map((a, index) => {
+      const changes = a.changes || 0;
+      const changesStr = changes >= 0
+        ? '+$' + changes.toLocaleString() + '.00'
+        : '-$' + Math.abs(changes).toLocaleString() + '.00';
+
+      return [
+        index + 1,
+        a.agencyName,
+        a.type,
+        '$' + (a.beginningDebt || 0).toLocaleString() + '.00',
+        changesStr,
+        '$' + (a.endingDebt || 0).toLocaleString() + '.00',
+        (a.status || 'NORMAL').toUpperCase()
+      ];
+    });
+
+    // Add total row
+    const totalChangeStr = totalChange >= 0
+      ? '+$' + totalChange.toLocaleString() + '.00'
+      : '-$' + Math.abs(totalChange).toLocaleString() + '.00';
+
+    tableData.push([
+      { content: 'Total', colSpan: 3, styles: { fontStyle: 'bold' } },
+      { content: '$' + totalBegin.toLocaleString() + '.00', styles: { fontStyle: 'bold' } },
+      { content: totalChangeStr, styles: { fontStyle: 'bold' } },
+      { content: '$' + totalEnd.toLocaleString() + '.00', styles: { fontStyle: 'bold' } },
+      ''
+    ]);
+
+    // Add table
+    autoTable(doc, {
+      startY: 45,
+      head: [['NO.', 'AGENCY', 'TYPE', 'BEGINNING DEBT', 'CHANGES', 'ENDING DEBT', 'STATUS']],
+      body: tableData,
+      theme: 'striped',
+      headStyles: {
+        fillColor: [37, 99, 235],
+        textColor: [255, 255, 255],
+        fontSize: 9,
+        fontStyle: 'bold'
+      },
+      bodyStyles: {
+        fontSize: 8
+      },
+      alternateRowStyles: {
+        fillColor: [248, 250, 252]
+      },
+      columnStyles: {
+        0: { cellWidth: 12 },
+        1: { cellWidth: 35 },
+        2: { cellWidth: 25 },
+        3: { cellWidth: 30 },
+        4: { cellWidth: 28 },
+        5: { cellWidth: 30 },
+        6: { cellWidth: 22 }
+      },
+      margin: { top: 45 }
+    });
+
+    // Add footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      doc.text(
+        'Generated on ' + new Date().toLocaleString(),
+        14,
+        doc.internal.pageSize.height - 10
+      );
+      doc.text(
+        'Page ' + i + ' of ' + pageCount,
+        doc.internal.pageSize.width - 30,
+        doc.internal.pageSize.height - 10
+      );
+    }
+
+    // Save PDF
+    doc.save('Debt_Report_' + selectedPeriod.replace(/\s+/g, '_') + '_' + new Date().toISOString().split('T')[0] + '.pdf');
+  };
+
   const agencies = reportData.agencies || [];
   const totalBegin = reportData.totalBeginningDebt || 0;
   const totalChange = reportData.totalChanges || 0;
@@ -61,11 +163,9 @@ function DebtReport({ user, onLogout, onNavigate }) {
       <section className="debt-filters">
         <div className="debt-filters-header">
           <h3>Report Filters</h3>
-          {!isAdmin && (
-            <button className="debt-generate" onClick={handleGenerateReport}>
-              Generate Report
-            </button>
-          )}
+          <button className="debt-generate" onClick={handleGenerateReport}>
+            Generate Report
+          </button>
         </div>
         <div className="debt-filter-row">
           <div className="date-input-group">
@@ -248,9 +348,9 @@ function DebtReport({ user, onLogout, onNavigate }) {
               </button>
               <button
                 className="btn-primary"
-                onClick={() => alert("Printing not implemented yet")}
+                onClick={handleExportPDF}
               >
-                Print
+                Export PDF
               </button>
             </div>
           </div>
