@@ -14,6 +14,17 @@ const paymentReceiptSchema = new mongoose.Schema(
     date: { type: Date, required: true },
     amountPaid: { type: Number, required: true, min: 1 },
 
+    items: [
+      {
+        productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
+        productName: { type: String, required: true },
+        unit: { type: String, required: true },
+        quantity: { type: Number, required: true, min: 1 },
+        unitPrice: { type: Number, required: true, min: 0 },
+        amount: { type: Number, required: true, min: 0 }
+      }
+    ],
+
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

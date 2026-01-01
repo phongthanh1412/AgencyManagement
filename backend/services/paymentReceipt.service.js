@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const Agency = require("../models/Agency");
 const PaymentReceipt = require("../models/PaymentReceipt");
 const DebtHistory = require("../models/DebtHistory");
+const ExportReceipt = require("../models/ExportReceipt");
 
 // Receipt code: PAY-YYYYMMDD-xxxxx
 const generateReceiptCode = () => {
@@ -36,6 +37,13 @@ class PaymentReceiptService {
         const agency = await Agency.findById(agencyId).session(session);
         if (!agency) throw new Error("Agency not found");
 
+        // Fetch the most recent export receipt for this agency to get items
+        const recentExportReceipt = await ExportReceipt.findOne({ agencyId })
+          .sort({ date: -1 })
+          .session(session);
+
+        const items = recentExportReceipt ? recentExportReceipt.items : [];
+
         // Check not allow paying more than debt
         if (amountPaid > agency.currentDebt) {
           throw new Error("Amount paid exceeds current debt");
@@ -61,6 +69,7 @@ class PaymentReceiptService {
               agencyName: agency.name,
               date: receiptDate,
               amountPaid,
+              items,
               createdBy: userId
             }
           ],
@@ -110,7 +119,7 @@ class PaymentReceiptService {
 
   async getPaymentReceipts() {
     const receipts = await PaymentReceipt.find()
-      .select("receiptCode agencyId agencyName date amountPaid")
+      .select("receiptCode agencyId agencyName date amountPaid items")
       .sort({ date: -1 });
 
     return receipts;

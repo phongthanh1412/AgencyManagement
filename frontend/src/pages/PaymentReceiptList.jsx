@@ -200,15 +200,48 @@ function PaymentReceiptList({ user, onLogout, onNavigate }) {
                 </div>
               </div>
 
-              <h4 className="receipt-detail-items-title">Payment Information</h4>
-              <div className="receipt-detail-card">
-                <div className="info-label">Payment Method</div>
-                <div className="info-value">{selectedReceipt.method || "—"}</div>
-                <div className="info-label" style={{ marginTop: 12 }}>Note</div>
-                <div className="info-value">
-                  {selectedReceipt.note || "—"}
+              <h4 className="receipt-detail-items-title">Items</h4>
+
+              {selectedReceipt.items && selectedReceipt.items.length > 0 ? (
+                <div className="table-wrapper">
+                  <table className="debt-table">
+                    <thead>
+                      <tr>
+                        <th>No.</th>
+                        <th>Product</th>
+                        <th>Unit</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        <th>Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedReceipt.items.map((item, idx) => (
+                        <tr key={idx}>
+                          <td>{idx + 1}</td>
+                          <td>{item.productName}</td>
+                          <td>{item.unit}</td>
+                          <td>{item.quantity}</td>
+                          <td>${item.unitPrice.toLocaleString()}.00</td>
+                          <td>${item.amount.toLocaleString()}.00</td>
+                        </tr>
+                      ))}
+                      <tr className="debt-table-total">
+                        <td colSpan={5} style={{ textAlign: "right" }}>
+                          <strong>Total Amount:</strong>
+                        </td>
+                        <td>
+                          <strong>${selectedReceipt.items.reduce((sum, item) => sum + item.amount, 0).toLocaleString()}.00</strong>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
-              </div>
+              ) : (
+                <div className="receipt-detail-card">
+                  <div className="info-value">No items available</div>
+                </div>
+              )}
             </div>
 
             <div className="receipt-detail-footer">
