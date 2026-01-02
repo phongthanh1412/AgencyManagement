@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import MasterLayout from "../components/Layout";
 import "../App.css";
 import { getAgencies, deleteAgency } from '../services/agencyService';
+import { getAgencyTypes } from '../services/agencyTypeService';
 
 function AgencyDirectory({ user, onLogout, onNavigate, onEditAgency, onViewAgency }) {
   const [searchName, setSearchName] = useState("");
@@ -9,12 +10,19 @@ function AgencyDirectory({ user, onLogout, onNavigate, onEditAgency, onViewAgenc
   const [districtFilter, setDistrictFilter] = useState("All Districts");
   const [phoneFilter, setPhoneFilter] = useState("");
   const [agencies, setAgencies] = useState([]);
+  const [agencyTypes, setAgencyTypes] = useState([]);
   const [deleteId, setDeleteId] = useState(null);
   const [deleteName, setDeleteName] = useState("");
   const isAdmin = (user?.role || "").toLowerCase() === "admin";
 
   useEffect(() => {
-    getAgencies().then(setAgencies);
+    getAgencies().then(setAgencies).catch(err => {
+      alert("Failed to load agencies: " + (err.message || "Unknown error"));
+    });
+    getAgencyTypes().then(setAgencyTypes).catch(err => {
+      // Silently fail for agency types, filter will just show "All Types"
+      console.warn("Failed to load agency types:", err);
+    });
   }, []);
 
   const districts = useMemo(() => {
@@ -30,7 +38,7 @@ function AgencyDirectory({ user, onLogout, onNavigate, onEditAgency, onViewAgenc
       const matchType =
         typeFilter === "All Types" || a.type === typeFilter;
       const matchDistrict =
-        districtFilter === "All Districts" || a.district === districtFilter;
+        districtFilter === "All Districts" || a.district === parseInt(districtFilter, 10);
       const matchPhone =
         !phoneFilter ||
         a.phone.replace(/\s|\(|\)|-/g, "").includes(phoneFilter.replace(/\D/g, ""));
@@ -92,15 +100,18 @@ function AgencyDirectory({ user, onLogout, onNavigate, onEditAgency, onViewAgenc
             onChange={(e) => setTypeFilter(e.target.value)}
           >
             <option>All Types</option>
-            <option>Type 1</option>
-            <option>Type 2</option>
+            {agencyTypes.map((type) => (
+              <option key={type._id} value={type.name}>
+                {type.name}
+              </option>
+            ))}
           </select>
           <select
             value={districtFilter}
             onChange={(e) => setDistrictFilter(e.target.value)}
           >
             {districts.map((d) => (
-              <option key={d} value={d}>
+              <option key={d} value={String(d)}>
                 {d}
               </option>
             ))}
@@ -154,11 +165,22 @@ function AgencyDirectory({ user, onLogout, onNavigate, onEditAgency, onViewAgenc
                   <td>{a.type}</td>
                   <td>{a.district}</td>
                   <td>{a.phone}</td>
-                  <td className={a.currentDebt > 30000 ? "agency-debt-high" : ""}>
+                  <td className={(() => {
+                    if (a.maxDebt > 0 && a.currentDebt > a.maxDebt) {
+                      return "agency-debt-high";
+                    }
+                    if (a.currentDebt >= 0) {
+                      return "agency-debt-success";
+                    }
+                    return "";
+                  })()}>
                     ${a.currentDebt.toLocaleString()}.00
                   </td>
                   <td>
-                    {new Date(a.receiptDate).toLocaleDateString("en-GB")}
+                    {a.receiptDate ? (() => {
+                      const date = new Date(a.receiptDate);
+                      return !isNaN(date.getTime()) ? date.toLocaleDateString("en-GB") : "Invalid Date";
+                    })() : "—"}
                   </td>
                   {isAdmin && (
                     <td className="regulation-table-actions">

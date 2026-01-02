@@ -14,14 +14,17 @@ function EditAgency({ user, agency, onLogout, onNavigate }) {
     email: "",
     address: "",
     district: "",
-    receivedDate: "",
+    receiptDate: "",
   });
   const [showSuccess, setShowSuccess] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [error, setError] = useState(null);
   const [types, setTypes] = useState([]);
 
   useEffect(() => {
-    getAgencyTypes().then(setTypes).catch(console.error);
+    getAgencyTypes().then(setTypes).catch(err => {
+      setError("Failed to load agency types: " + (err.message || "Unknown error"));
+    });
   }, []);
 
   useEffect(() => {
@@ -34,6 +37,15 @@ function EditAgency({ user, agency, onLogout, onNavigate }) {
         if (found) foundTypeId = found._id;
       }
 
+      // Format receiptDate from Date object to YYYY-MM-DD format
+      let receiptDateStr = "";
+      if (agency.receiptDate) {
+        const date = new Date(agency.receiptDate);
+        if (!isNaN(date.getTime())) {
+          receiptDateStr = date.toISOString().slice(0, 10);
+        }
+      }
+
       setFormData({
         id: agency._id || agency.id,
         name: agency.name || "",
@@ -42,7 +54,7 @@ function EditAgency({ user, agency, onLogout, onNavigate }) {
         email: agency.email || "",
         address: agency.address || "",
         district: agency.district || "",
-        receivedDate: agency.receivedDate || "",
+        receiptDate: receiptDateStr,
       });
     }
   }, [agency, types]);
@@ -57,20 +69,23 @@ function EditAgency({ user, agency, onLogout, onNavigate }) {
     if (!isAdmin || !formData.id) return;
 
     const updatedAgency = {
-      id: formData.id,
       name: formData.name,
       typeId: formData.type, 
       district: Number(formData.district), 
       phone: formData.phone,
       email: formData.email,
       address: formData.address,
-      debt: agency?.debt || 0,
-      receivedDate: formData.receivedDate || new Date().toISOString().slice(0, 10),
+      receiptDate: formData.receiptDate || new Date().toISOString().slice(0, 10),
     };
 
-    updateAgency(formData.id, updatedAgency).then(() => {
-      setShowSuccess(true);
-    });
+    updateAgency(formData.id, updatedAgency)
+      .then(() => {
+        setShowSuccess(true);
+        setError(null);
+      })
+      .catch((error) => {
+        setError(error.message || "Failed to update agency");
+      });
   };
 
   const handleDelete = () => {
@@ -109,7 +124,7 @@ function EditAgency({ user, agency, onLogout, onNavigate }) {
             <button
               type="button"
               className="btn-secondary"
-              onClick={() => onNavigate("agency")}
+              onClick={() => onNavigate("agency-details")}
             >
               Back
             </button>
@@ -213,7 +228,7 @@ function EditAgency({ user, agency, onLogout, onNavigate }) {
               </div>
 
               <div className="input-group">
-                <label>Received Date <span className="required">*</span></label>
+                <label>Receipt Date <span className="required">*</span></label>
                 <div className="date-input-wrapper" onClick={(e) => {
                   const input = e.currentTarget.querySelector('input[type="date"]');
                   if (input && input.showPicker) {
@@ -225,8 +240,8 @@ function EditAgency({ user, agency, onLogout, onNavigate }) {
                   <input
                     type="date"
                     className="date-input"
-                    name="receivedDate"
-                    value={formData.receivedDate}
+                    name="receiptDate"
+                    value={formData.receiptDate}
                     onChange={handleChange}
                     required
                   />
@@ -243,7 +258,7 @@ function EditAgency({ user, agency, onLogout, onNavigate }) {
               <button type="submit" className="btn-primary">
                 Update Agency
               </button>
-              <button type="button" className="btn-secondary" onClick={() => onNavigate('agency')}>
+              <button type="button" className="btn-secondary" onClick={() => onNavigate('agency-details')}>
                 Cancel
               </button>
             </div>
@@ -289,6 +304,27 @@ function EditAgency({ user, agency, onLogout, onNavigate }) {
               </button>
               <button className="btn-danger" onClick={confirmDelete}>
                 Yes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="regulation-modal-overlay" onClick={() => setError(null)}>
+          <div className="regulation-confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="regulation-confirm-icon" style={{ background: "#fef2f2", color: "#ef4444" }}>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+              </svg>
+            </div>
+            <h3>Error</h3>
+            <p style={{ color: "#1e293b", marginBottom: "20px" }}>
+              {error}
+            </p>
+            <div className="regulation-confirm-actions">
+              <button className="btn-primary" onClick={() => setError(null)}>
+                OK
               </button>
             </div>
           </div>

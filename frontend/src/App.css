@@ -1213,8 +1213,13 @@ body {
   color: #0f172a;
 }
 
-.agency-debt-high {
-  color: #ef4444;
+.debt-table .agency-debt-high {
+  color: #ef4444 !important;
+  font-weight: 600;
+}
+
+.debt-table .agency-debt-warning {
+  color: #10b981 !important;
   font-weight: 600;
 }
 

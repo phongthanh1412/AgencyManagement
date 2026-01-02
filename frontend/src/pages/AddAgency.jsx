@@ -3,6 +3,7 @@ import MasterLayout from "../components/Layout";
 import "../App.css";
 import { createAgency } from '../services/agencyService';
 import { getAgencyTypes } from '../services/agencyTypeService';
+import { getSystemRegulation } from '../services/systemRegulationService';
 
 function AddAgency({ user, onLogout, onNavigate }) {
   const isAdmin = (user?.role || "").toLowerCase() === "admin";
@@ -18,9 +19,19 @@ function AddAgency({ user, onLogout, onNavigate }) {
   const [types, setTypes] = useState([]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [createdAgency, setCreatedAgency] = useState(null);
+  const [error, setError] = useState(null);
+  const [regulation, setRegulation] = useState(null);
 
   useEffect(() => {
-    getAgencyTypes().then(setTypes).catch(err => console.error(err));
+    Promise.all([
+      getAgencyTypes(),
+      getSystemRegulation()
+    ]).then(([typesList, regulationData]) => {
+      setTypes(typesList || []);
+      setRegulation(regulationData);
+    }).catch(err => {
+      setError("Failed to load agency types or system regulation: " + (err.message || "Unknown error"));
+    });
   }, []);
 
   const handleChange = (e) => {
@@ -46,8 +57,9 @@ function AddAgency({ user, onLogout, onNavigate }) {
     createAgency(newAgency).then((created) => {
       setCreatedAgency(created);
       setShowSuccess(true);
+      setError(null);
     }).catch(err => {
-      alert("Failed to create agency: " + err.message);
+      setError(err.message || "Failed to create agency");
     });
   };
 
@@ -71,10 +83,21 @@ function AddAgency({ user, onLogout, onNavigate }) {
         <div className="restrictions-content">
           <div className="restrictions-title">Please note the following restrictions:</div>
           <ul className="restrictions-list">
-            <li>Maximum 4 agencies per district</li>
-            <li>Cannot add agencies to districts greater than 20</li>
-            <li>Type 1 agencies have a max debt limit of $50,000</li>
-            <li>Type 2 agencies have a max debt limit of $20,000</li>
+            {regulation && (
+              <>
+                <li>Maximum {regulation.maxAgencyPerDistrict || 10} agencies per district</li>
+                <li>Cannot add agencies to districts greater than {regulation.maxDistrict || 20}</li>
+              </>
+            )}
+            {types.length > 0 ? (
+              types.map(type => (
+                <li key={type._id}>
+                  {type.name} agencies have a max debt limit of ${(type.maxDebt || 0).toLocaleString()}
+                </li>
+              ))
+            ) : (
+              <li>Loading agency types...</li>
+            )}
           </ul>
         </div>
       </div>
@@ -227,6 +250,27 @@ function AddAgency({ user, onLogout, onNavigate }) {
               </button>
               <button className="btn-primary" onClick={() => onNavigate('agency')}>
                 Yes, Go to Agency Directory
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="regulation-modal-overlay" onClick={() => setError(null)}>
+          <div className="regulation-confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="regulation-confirm-icon" style={{ background: "#fef2f2", color: "#ef4444" }}>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+              </svg>
+            </div>
+            <h3>Error</h3>
+            <p style={{ color: "#1e293b", marginBottom: "20px" }}>
+              {error}
+            </p>
+            <div className="regulation-confirm-actions">
+              <button className="btn-primary" onClick={() => setError(null)}>
+                OK
               </button>
             </div>
           </div>

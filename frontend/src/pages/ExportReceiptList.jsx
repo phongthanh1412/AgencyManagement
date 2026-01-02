@@ -13,12 +13,19 @@ function ExportReceiptList({ user, onLogout, onNavigate }) {
 
   const [receipts, setReceipts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   React.useEffect(() => {
-    getExportReceipts().then(data => {
-      setReceipts(data);
-      setLoading(false);
-    });
+    getExportReceipts()
+      .then(data => {
+        setReceipts(data);
+        setLoading(false);
+        setError(null);
+      })
+      .catch(err => {
+        setError("Failed to load export receipts: " + (err.message || "Unknown error"));
+        setLoading(false);
+      });
   }, []);
 
   const agencies = useMemo(
@@ -47,7 +54,7 @@ function ExportReceiptList({ user, onLogout, onNavigate }) {
         setSelectedReceipt(receipt);
       }
     } catch (e) {
-      console.error(e);
+      setError("Failed to load receipt details: " + (e.message || "Unknown error"));
     }
   };
 
@@ -168,7 +175,10 @@ function ExportReceiptList({ user, onLogout, onNavigate }) {
                   <td>{index + 1}</td>
                   <td>{r.receiptCode}</td>
                   <td>{r.agencyName}</td>
-                  <td>{new Date(r.date).toLocaleDateString("en-GB")}</td>
+                  <td>{r.date ? (() => {
+                    const date = new Date(r.date);
+                    return !isNaN(date.getTime()) ? date.toLocaleDateString("en-GB") : "Invalid Date";
+                  })() : "—"}</td>
                   <td>${r.totalAmount.toLocaleString()}.00</td>
                   <td>{r.items} items</td>
                 </tr>
@@ -210,7 +220,10 @@ function ExportReceiptList({ user, onLogout, onNavigate }) {
                 <div className="receipt-detail-card">
                   <div className="info-label">Date Created</div>
                   <div className="info-value">
-                    {new Date(selectedReceipt.date).toLocaleDateString("en-GB")}
+                    {selectedReceipt.date ? (() => {
+                      const date = new Date(selectedReceipt.date);
+                      return !isNaN(date.getTime()) ? date.toLocaleDateString("en-GB") : "Invalid Date";
+                    })() : "—"}
                   </div>
                   <div className="info-label" style={{ marginTop: 16 }}>Total Amount</div>
                   <div className="info-value total-value">

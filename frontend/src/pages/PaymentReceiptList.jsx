@@ -12,9 +12,14 @@ function PaymentReceiptList({ user, onLogout, onNavigate }) {
   const [selectedReceipt, setSelectedReceipt] = useState(null);
 
   const [receipts, setReceipts] = useState([]);
+  const [loadError, setLoadError] = useState(null);
 
   React.useEffect(() => {
-    getPaymentReceipts().then(setReceipts).catch(console.error);
+    getPaymentReceipts()
+      .then(setReceipts)
+      .catch(err => {
+        setLoadError("Failed to load payment receipts: " + (err.message || "Unknown error"));
+      });
   }, []);
 
   const agencies = useMemo(
@@ -45,6 +50,19 @@ function PaymentReceiptList({ user, onLogout, onNavigate }) {
         <h1>Payment Receipt</h1>
         <p>Search and view payment receipts</p>
       </div>
+
+      {loadError && (
+        <div style={{ 
+          padding: "12px 16px", 
+          backgroundColor: "#fef2f2", 
+          color: "#ef4444", 
+          borderRadius: "8px", 
+          marginBottom: "20px",
+          border: "1px solid #fee2e2"
+        }}>
+          {loadError}
+        </div>
+      )}
 
       <section className="debt-filters">
         <div className="debt-filters-header">
@@ -150,7 +168,10 @@ function PaymentReceiptList({ user, onLogout, onNavigate }) {
                   <td>{index + 1}</td>
                   <td>{r.receiptCode}</td>
                   <td>{r.agencyName}</td>
-                  <td>{new Date(r.date).toLocaleDateString("en-GB")}</td>
+                  <td>{r.date ? (() => {
+                    const date = new Date(r.date);
+                    return !isNaN(date.getTime()) ? date.toLocaleDateString("en-GB") : "Invalid Date";
+                  })() : "—"}</td>
                   <td>${r.amountPaid.toLocaleString()}.00</td>
                 </tr>
               ))}
@@ -191,7 +212,10 @@ function PaymentReceiptList({ user, onLogout, onNavigate }) {
                 <div className="receipt-detail-card">
                   <div className="info-label">Date Created</div>
                   <div className="info-value">
-                    {new Date(selectedReceipt.date).toLocaleDateString("en-GB")}
+                    {selectedReceipt.date ? (() => {
+                      const date = new Date(selectedReceipt.date);
+                      return !isNaN(date.getTime()) ? date.toLocaleDateString("en-GB") : "Invalid Date";
+                    })() : "—"}
                   </div>
                   <div className="info-label" style={{ marginTop: 16 }}>Amount Paid</div>
                   <div className="info-value total-value">

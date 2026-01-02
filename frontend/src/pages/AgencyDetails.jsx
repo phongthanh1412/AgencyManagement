@@ -5,6 +5,7 @@ import {
   getExportReceiptsByAgency,
   getPaymentReceiptsByAgency,
   getDebtHistoryByAgency,
+  deleteAgency,
 } from "../services/agencyService";
 
 function AgencyDetails({ user, agency, onLogout, onNavigate, onEdit }) {
@@ -29,14 +30,53 @@ function AgencyDetails({ user, agency, onLogout, onNavigate, onEdit }) {
   const [exportReceipts, setExportReceipts] = useState([]);
   const [paymentReceipts, setPaymentReceipts] = useState([]);
   const [debtHistory, setDebtHistory] = useState([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+    
     if (agency?._id) {
-      getExportReceiptsByAgency(agency._id).then(setExportReceipts);
-      getPaymentReceiptsByAgency(agency._id).then(setPaymentReceipts);
-      getDebtHistoryByAgency(agency._id).then(setDebtHistory);
+      getExportReceiptsByAgency(agency._id).then(data => {
+        if (isMounted) setExportReceipts(data);
+      }).catch(err => {
+        if (isMounted) console.error("Failed to load export receipts:", err);
+      });
+      
+      getPaymentReceiptsByAgency(agency._id).then(data => {
+        if (isMounted) setPaymentReceipts(data);
+      }).catch(err => {
+        if (isMounted) console.error("Failed to load payment receipts:", err);
+      });
+      
+      getDebtHistoryByAgency(agency._id).then(data => {
+        if (isMounted) setDebtHistory(data);
+      }).catch(err => {
+        if (isMounted) console.error("Failed to load debt history:", err);
+      });
     }
+
+    return () => {
+      isMounted = false;
+    };
   }, [agency?._id]);
+
+  const handleDelete = () => {
+    if (!isAdmin || !agency?._id) return;
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = () => {
+    if (!isAdmin || !agency?._id) return;
+    deleteAgency(agency._id)
+      .then(() => {
+        setShowDeleteConfirm(false);
+        onNavigate("agency");
+      })
+      .catch((error) => {
+        alert("Failed to delete agency: " + (error.message || "Unknown error"));
+        setShowDeleteConfirm(false);
+      });
+  };
 
   return (
     <MasterLayout currentPage="agency" user={user} onLogout={onLogout} onNavigate={onNavigate}>
@@ -58,7 +98,7 @@ function AgencyDetails({ user, agency, onLogout, onNavigate, onEdit }) {
               <button
                 type="button"
                 className="btn-danger"
-                onClick={() => onNavigate("edit-agency")}
+                onClick={handleDelete}
               >
                 Delete
               </button>
@@ -100,7 +140,10 @@ function AgencyDetails({ user, agency, onLogout, onNavigate, onEdit }) {
                 <div className="agency-details-label">Received Date</div>
                 <div className="agency-details-value">
                   {agency.receiptDate
-                    ? new Date(agency.receiptDate).toLocaleDateString("en-GB")
+                    ? (() => {
+                        const date = new Date(agency.receiptDate);
+                        return !isNaN(date.getTime()) ? date.toLocaleDateString("en-GB") : "Invalid Date";
+                      })()
                     : "—"}
                 </div>
               </div>
@@ -172,7 +215,10 @@ function AgencyDetails({ user, agency, onLogout, onNavigate, onEdit }) {
                   <tr key={index}>
                     <td>{index + 1}</td>
                     <td>{r.receiptCode}</td>
-                    <td>{new Date(r.date).toLocaleDateString("en-GB")}</td>
+                    <td>{r.date ? (() => {
+                        const date = new Date(r.date);
+                        return !isNaN(date.getTime()) ? date.toLocaleDateString("en-GB") : "Invalid Date";
+                      })() : "—"}</td>
                     <td>${r.totalAmount.toLocaleString()}.00</td>
                     <td>{r.items} items</td>
                   </tr>
@@ -196,7 +242,10 @@ function AgencyDetails({ user, agency, onLogout, onNavigate, onEdit }) {
                   <tr key={index}>
                     <td>{index + 1}</td>
                     <td>{r.receiptCode}</td>
-                    <td>{new Date(r.date).toLocaleDateString("en-GB")}</td>
+                    <td>{r.date ? (() => {
+                        const date = new Date(r.date);
+                        return !isNaN(date.getTime()) ? date.toLocaleDateString("en-GB") : "Invalid Date";
+                      })() : "—"}</td>
                     <td>${r.amountPaid.toLocaleString()}.00</td>
                   </tr>
                 ))}
@@ -220,7 +269,10 @@ function AgencyDetails({ user, agency, onLogout, onNavigate, onEdit }) {
                   <tr key={index}>
                     <td>{index + 1}</td>
                     <td>{r.receiptCode}</td>
-                    <td>{new Date(r.date).toLocaleDateString("en-GB")}</td>
+                    <td>{r.date ? (() => {
+                        const date = new Date(r.date);
+                        return !isNaN(date.getTime()) ? date.toLocaleDateString("en-GB") : "Invalid Date";
+                      })() : "—"}</td>
                     <td className={r.changes > 0 ? "text-positive" : "text-negative"}>
                       {r.changes > 0
                         ? `+$${r.changes.toLocaleString()}.00`
@@ -234,6 +286,28 @@ function AgencyDetails({ user, agency, onLogout, onNavigate, onEdit }) {
           )}
         </div>
       </div>
+
+      {showDeleteConfirm && (
+        <div className="regulation-modal-overlay" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="regulation-confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="regulation-confirm-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
+            </div>
+            <h3>Delete Agency</h3>
+            <p>Are you sure you want to delete <strong>"{agency.name}"</strong>? This action cannot be undone.</p>
+            <div className="regulation-confirm-actions">
+              <button className="btn-secondary" onClick={() => setShowDeleteConfirm(false)}>
+                No
+              </button>
+              <button className="btn-danger" onClick={confirmDelete}>
+                Yes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </MasterLayout>
   );
 }

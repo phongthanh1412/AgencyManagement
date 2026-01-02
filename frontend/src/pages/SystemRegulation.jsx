@@ -25,6 +25,7 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
   const [newProduct, setNewProduct] = useState({ name: "", unit: "", unitPrice: "" });
   const [deleteTypeId, setDeleteTypeId] = useState(null);
   const [deleteProductId, setDeleteProductId] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -61,7 +62,7 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
         setMaxDistricts(value);
         setEditingDistrict(false);
       } catch (error) {
-        alert(error.message);
+        setError(error.message || "An error occurred");
       }
     }
   };
@@ -77,7 +78,7 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
         setMaxAgenciesPerDistrict(value);
         setEditingAgencies(false);
       } catch (error) {
-        alert(error.message);
+        setError(error.message || "An error occurred");
       }
     }
   };
@@ -94,7 +95,7 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
         setNewTypeDebt("");
         setShowAddTypeForm(false);
       } catch (error) {
-        alert(error.message);
+        setError(error.message || "An error occurred");
       }
     }
   };
@@ -119,7 +120,7 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
         setNewTypeName("");
         setNewTypeDebt("");
       } catch (error) {
-        alert(error.message);
+        setError(error.message || "An error occurred");
       }
     }
   };
@@ -135,7 +136,7 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
         setAgencyTypes(agencyTypes.filter(t => t._id !== deleteTypeId));
         setDeleteTypeId(null);
       } catch (error) {
-        alert(error.message);
+        setError(error.message || "An error occurred");
       }
     }
   };
@@ -152,7 +153,7 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
         setNewProduct({ name: "", unit: "", unitPrice: "" });
         setShowAddProduct(false);
       } catch (error) {
-        alert(error.message);
+        setError(error.message || "An error occurred");
       }
     }
   };
@@ -176,7 +177,7 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
         setEditingProduct(null);
         setNewProduct({ name: "", unit: "", unitPrice: "" });
       } catch (error) {
-        alert(error.message);
+        setError(error.message || "An error occurred");
       }
     }
   };
@@ -192,7 +193,7 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
         setProducts(products.filter(p => p._id !== deleteProductId));
         setDeleteProductId(null);
       } catch (error) {
-        alert(error.message);
+        setError(error.message || "An error occurred");
       }
     }
   };
@@ -796,6 +797,27 @@ function SystemRegulation({ user, onLogout, onNavigate }) {
           </div>
         );
       })()}
+
+      {error && (
+        <div className="regulation-modal-overlay" onClick={() => setError(null)}>
+          <div className="regulation-confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="regulation-confirm-icon" style={{ background: "#fef2f2", color: "#ef4444" }}>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+              </svg>
+            </div>
+            <h3>Error</h3>
+            <p style={{ color: "#1e293b", marginBottom: "20px" }}>
+              {error}
+            </p>
+            <div className="regulation-confirm-actions">
+              <button className="btn-primary" onClick={() => setError(null)}>
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </MasterLayout>
   );
 }

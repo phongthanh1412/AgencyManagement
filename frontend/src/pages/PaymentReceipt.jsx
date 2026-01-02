@@ -10,9 +10,16 @@ function PaymentReceipt({ user, onLogout, onNavigate, currentPage = 'payment-rec
   const [receiptDate, setReceiptDate] = useState("2025-07-19");
   const [amountCollected, setAmountCollected] = useState("");
   const [agencies, setAgencies] = useState([]);
+  const [error, setError] = useState(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
-    getAgencies().then(setAgencies);
+    getAgencies()
+      .then(setAgencies)
+      .catch(err => {
+        setError("Failed to load agencies: " + (err.message || "Unknown error"));
+      });
   }, []);
 
   const handleAgencySelect = (agency) => {
@@ -21,14 +28,19 @@ function PaymentReceipt({ user, onLogout, onNavigate, currentPage = 'payment-rec
   };
 
   const handleCreateReceipt = async () => {
+    if (!selectedAgency) {
+      setError("Please select an agency");
+      return;
+    }
+
     if (!amountCollected || parseFloat(amountCollected) <= 0) {
-      alert("Please enter a valid amount collected");
+      setError("Please enter a valid amount collected");
       return;
     }
 
     const amount = parseFloat(amountCollected);
-    if (selectedAgency && amount > selectedAgency.debt) {
-      alert("Amount collected cannot exceed the agency's current debt.");
+    if (amount > (selectedAgency.currentDebt || 0)) {
+      setError("Amount collected cannot exceed the agency's current debt.");
       return;
     }
 
@@ -39,7 +51,9 @@ function PaymentReceipt({ user, onLogout, onNavigate, currentPage = 'payment-rec
         amountPaid: amount
       });
 
-      alert(`Payment Receipt Created for ${selectedAgency.name}!`);
+      setSuccessMessage(`Payment Receipt Created for ${selectedAgency.name}!`);
+      setShowSuccess(true);
+      setError(null);
 
       // Refresh agencies
       const list = await getAgencies();
@@ -50,7 +64,7 @@ function PaymentReceipt({ user, onLogout, onNavigate, currentPage = 'payment-rec
       setAmountCollected("");
 
     } catch (error) {
-      alert("Failed to create payment receipt: " + error.message);
+      setError(error.message || "Failed to create payment receipt");
     }
   };
 
@@ -205,6 +219,48 @@ function PaymentReceipt({ user, onLogout, onNavigate, currentPage = 'payment-rec
           </button>
         </div>
       </div>
+
+      {error && (
+        <div className="regulation-modal-overlay" onClick={() => setError(null)}>
+          <div className="regulation-confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="regulation-confirm-icon" style={{ background: "#fef2f2", color: "#ef4444" }}>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+              </svg>
+            </div>
+            <h3>Error</h3>
+            <p style={{ color: "#1e293b", marginBottom: "20px" }}>
+              {error}
+            </p>
+            <div className="regulation-confirm-actions">
+              <button className="btn-primary" onClick={() => setError(null)}>
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSuccess && (
+        <div className="regulation-modal-overlay" onClick={() => setShowSuccess(false)}>
+          <div className="regulation-confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="regulation-confirm-icon" style={{ background: "#ecfdf3", color: "#10b981" }}>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h3>Success</h3>
+            <p style={{ color: "#1e293b", marginBottom: "20px" }}>
+              {successMessage}
+            </p>
+            <div className="regulation-confirm-actions">
+              <button className="btn-primary" onClick={() => setShowSuccess(false)}>
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </MasterLayout>
   );
 }

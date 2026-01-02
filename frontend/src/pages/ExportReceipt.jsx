@@ -23,11 +23,13 @@ function ExportReceipt({ user, onLogout, onNavigate, currentPage = 'export-recei
       getAgencies(),
       getProducts()
     ]).then(([agencyList, productList]) => {
-      setAgencies(agencyList);
-      setSelectedAgency(agencyList[0] || null);
+      setAgencies(agencyList || []);
+      setSelectedAgency((agencyList && agencyList[0]) || null);
       if (productList && productList.length > 0) {
         setProductsList(productList);
       }
+    }).catch(err => {
+      setNotification({ type: 'error', message: "Failed to load agencies or products: " + (err.message || "Unknown error") });
     });
 
   }, []);
@@ -92,17 +94,46 @@ function ExportReceipt({ user, onLogout, onNavigate, currentPage = 'export-recei
 
   const totalAmount = products.reduce((sum, p) => sum + p.amount, 0);
   const newDebt = selectedAgency ? (selectedAgency.currentDebt || 0) + totalAmount : 0;
-  const debtLimit = selectedAgency?.type === "Type 1" ? 20000 : 50000; 
+  const debtLimit = selectedAgency?.maxDebt || 0; 
 
   const handleCreateReceipt = async () => {
     setNotification(null);
-    if (!selectedAgency) return;
+    if (!selectedAgency) {
+      setNotification({ type: 'error', message: "Please select an agency" });
+      return;
+    }
+
+    // Validation: Check if products array is empty or invalid
+    const validProducts = products.filter(p => p.productId && p.quantity > 0 && p.unitPrice >= 0);
+    if (validProducts.length === 0) {
+      setNotification({ type: 'error', message: "Please add at least one valid product with product, quantity, and unit price" });
+      return;
+    }
+
+    // Validation: Check if total amount is greater than 0
+    if (totalAmount <= 0) {
+      setNotification({ type: 'error', message: "Total amount must be greater than 0" });
+      return;
+    }
+
+    // Validation: Check if all products have valid data
+    const hasInvalidProduct = products.some(p => 
+      !p.productId || 
+      !p.quantity || 
+      p.quantity <= 0 || 
+      p.unitPrice === undefined || 
+      p.unitPrice < 0
+    );
+    if (hasInvalidProduct) {
+      setNotification({ type: 'error', message: "Please ensure all products have valid product, quantity (> 0), and unit price (>= 0)" });
+      return;
+    }
 
     try {
       const payload = {
         agencyId: selectedAgency.id || selectedAgency._id,
         date: receiptDate,
-        items: products.map(p => ({
+        items: validProducts.map(p => ({
           productId: p.productId,
           quantity: p.quantity,
           unitPrice: p.unitPrice

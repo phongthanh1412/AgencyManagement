@@ -154,8 +154,29 @@ class AgencyService {
     if (phone !== undefined) updates.phone = phone;
     if (email !== undefined) updates.email = email;
     if (address !== undefined) updates.address = address;
-    if (district !== undefined) updates.district = district;
     if (receiptDate !== undefined) updates.receiptDate = receiptDate;
+
+    // Check district against system regulation
+    if (district !== undefined) {
+      const regulation = await SystemRegulation.findOne();
+      if (!regulation) {
+        throw new Error("System regulation not found");
+      }
+
+      if (district > regulation.maxDistrict) {
+        throw new Error("District exceeds limit");
+      }
+
+      // If changing district, check maxAgencyPerDistrict for the new district
+      if (district !== agency.district) {
+        const count = await Agency.countDocuments({ district });
+        if (count >= regulation.maxAgencyPerDistrict) {
+          throw new Error("Too many agencies in district");
+        }
+      }
+
+      updates.district = district;
+    }
 
     // Check if debt exceeds max debt of new type
     if (typeId !== undefined) {
