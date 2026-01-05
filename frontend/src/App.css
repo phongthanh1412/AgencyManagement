@@ -63,6 +63,7 @@
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
@@ -76,9 +77,12 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.5;
   }
@@ -151,7 +155,7 @@ body {
   right: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
   background-size: 50px 50px;
   animation: gridMove 20s linear infinite;
   pointer-events: none;
@@ -161,6 +165,7 @@ body {
   0% {
     transform: translate(0, 0);
   }
+
   100% {
     transform: translate(50px, 50px);
   }
@@ -180,6 +185,7 @@ body {
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -203,9 +209,12 @@ body {
 }
 
 @keyframes float {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0px);
   }
+
   50% {
     transform: translateY(-10px);
   }
@@ -380,7 +389,7 @@ body {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
   transition: left 0.5s ease;
 }
 
@@ -460,7 +469,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: 
+  background:
     radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
     radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.05) 0%, transparent 50%);
   pointer-events: none;
@@ -476,6 +485,36 @@ body {
   flex-direction: column;
   flex-shrink: 0;
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.03);
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+.sidebar.collapsed {
+  width: 0;
+  padding: 0;
+  border-right: none;
+}
+
+.sidebar-toggle {
+  position: absolute;
+  top: 16px;
+  right: -12px;
+  width: 24px;
+  height: auto;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.sidebar.collapsed .sidebar-toggle {
+  right: -36px;
 }
 
 .sidebar-header {
@@ -484,6 +523,10 @@ body {
   text-align: center;
   transition: all 0.3s ease;
   cursor: pointer;
+}
+
+.sidebar.collapsed .sidebar-header {
+  padding: 0 12px 24px;
 }
 
 .sidebar-header:hover {
@@ -502,6 +545,17 @@ body {
   margin: 0 auto 16px;
   box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
   transition: all 0.3s ease;
+}
+
+.sidebar.collapsed .sidebar-logo {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 0;
+}
+
+.sidebar.collapsed .sidebar-logo img {
+  width: 24px !important;
+  height: 24px !important;
 }
 
 .sidebar-header:hover .sidebar-logo {
@@ -549,6 +603,13 @@ body {
   gap: 12px;
   position: relative;
   overflow: hidden;
+  white-space: nowrap;
+}
+
+.sidebar.collapsed .sidebar-menu li {
+  justify-content: center;
+  padding: 12px;
+  margin: 0 8px 6px;
 }
 
 .sidebar-menu li::before {
@@ -623,6 +684,12 @@ body {
   align-items: center;
   gap: 8px;
   text-align: left;
+  white-space: nowrap;
+}
+
+.sidebar.collapsed .sidebar-tool-btn {
+  justify-content: center;
+  padding: 10px;
 }
 
 .sidebar-tool-btn:hover {
@@ -819,7 +886,7 @@ body {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
   transition: left 0.5s ease;
 }
 
@@ -1335,7 +1402,7 @@ body {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
   transition: left 0.5s ease;
 }
 
@@ -1994,6 +2061,7 @@ body {
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -2711,7 +2779,7 @@ body {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
   transition: left 0.5s ease;
 }
 
