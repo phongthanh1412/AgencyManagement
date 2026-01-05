@@ -66,9 +66,7 @@ export default function SignUp({ onNavigate }) {
       <div className="auth-container">
         <div className="auth-header">
           <div className="auth-logo">
-            <svg viewBox="0 0 24 24" fill="white">
-              <path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z" />
-            </svg>
+            <img src="/company.png" alt="Company Logo" width="64" height="64" style={{ display: 'block', margin: '0 auto' }} />
           </div>
           <h1>Agency Management System</h1>
           <p>Create a new account</p>

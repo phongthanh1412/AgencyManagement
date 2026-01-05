@@ -193,13 +193,12 @@ body {
 .auth-logo {
   width: 60px;
   height: 60px;
-  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
-  border-radius: 20px;
+  border-radius: 50%;
   display: flex;
+  color: white;
   align-items: center;
   justify-content: center;
   margin: 0 auto 16px;
-  box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4), 0 0 0 10px rgba(255, 255, 255, 0.1);
   animation: float 3s ease-in-out infinite;
 }
 
@@ -212,10 +211,10 @@ body {
   }
 }
 
-.auth-logo svg {
-  width: 30px;
-  height: 30px;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+.auth-logo img {
+  width: 60px;
+  height: 60px;
+  filter: brightness(0) invert(1);
 }
 
 .auth-header h1 {
@@ -1623,6 +1622,7 @@ body {
   flex: 1;
   padding: 40px 48px;
   overflow-y: auto;
+  margin-top: -20px;
 }
 
 .dashboard-header,
@@ -2114,7 +2114,7 @@ body {
 .action-btn {
   padding: 24px;
   background: white;
-  border: 1px solid #e2e8f0;
+  border: none;
   border-radius: 16px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -2152,8 +2152,8 @@ body {
 
 /* Variant: Export (Blue/Cyan) */
 .action-btn-export {
-  background: linear-gradient(145deg, #e0f2fe 0%, #bae6fd 100%);
-  border-color: #7dd3fc;
+  background: linear-gradient(145deg, #e0f2fe 0%, #4997c2 100%);
+  border: none;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -2165,7 +2165,7 @@ body {
 }
 
 .action-btn-export:hover {
-  border-color: #0891b2;
+  border: none;
   box-shadow: 0 12px 35px rgba(8, 145, 178, 0.25);
   background: linear-gradient(145deg, #cffafe 0%, #bfdbfe 100%);
 }
@@ -2179,8 +2179,8 @@ body {
 
 /* Variant: Payment (Green/Teal) */
 .action-btn-payment {
-  background: linear-gradient(145deg, #dcfce7 0%, #bbf7d0 100%);
-  border-color: #86efac;
+  background: linear-gradient(145deg, #dcfce7 0%, #3ca360 100%);
+  border: none;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -2192,7 +2192,7 @@ body {
 }
 
 .action-btn-payment:hover {
-  border-color: #059669;
+  border: none;
   box-shadow: 0 12px 35px rgba(5, 150, 105, 0.25);
   background: linear-gradient(145deg, #bbf7d0 0%, #86efac 100%);
 }
@@ -2206,8 +2206,8 @@ body {
 
 /* Variant: Debt (Rose/Red) */
 .action-btn-debt {
-  background: linear-gradient(145deg, #ffe4e6 0%, #fecdd3 100%);
-  border-color: #fda4af;
+  background: linear-gradient(145deg, #ffe4e6 0%, #b63f4c 100%);
+  border: none;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -2219,7 +2219,7 @@ body {
 }
 
 .action-btn-debt:hover {
-  border-color: #e11d48;
+  border: none;
   box-shadow: 0 12px 35px rgba(225, 29, 72, 0.25);
   background: linear-gradient(145deg, #fecdd3 0%, #fda4af 100%);
 }
@@ -2233,8 +2233,8 @@ body {
 
 /* Variant: Revenue (Violet/Indigo) */
 .action-btn-revenue {
-  background: linear-gradient(145deg, #dbeafe 0%, #bfdbfe 100%);
-  border-color: #93c5fd;
+  background: linear-gradient(145deg, #dbeafe 0%, #3b72b6 100%);
+  border: none;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -2246,7 +2246,7 @@ body {
 }
 
 .action-btn-revenue:hover {
-  border-color: #2563eb;
+  border: none;
   box-shadow: 0 12px 35px rgba(124, 58, 237, 0.25);
   background: linear-gradient(145deg, #bfdbfe 0%, #93c5fd 100%);
 }
@@ -2280,7 +2280,7 @@ body {
 
   .dashboard-main,
   .debt-main {
-    padding: 24px;
+    padding: 20px;
   }
 }
 
