@@ -25,6 +25,12 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
 app.use("/api/auth", authRoutes);
 app.use("/api/agencies", agencyRoutes);
 app.use("/api/export-receipts", exportReceiptRoutes);

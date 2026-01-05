@@ -1,4 +1,11 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+let envApiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+// Remove trailing slash if present
+envApiUrl = envApiUrl.replace(/\/$/, "");
+// Append /api if missing (assumes backend always prefixes with /api)
+if (!envApiUrl.endsWith("/api")) {
+  envApiUrl += "/api";
+}
+const API_URL = envApiUrl;
 
 const getAuthHeaders = () => {
   const user = JSON.parse(localStorage.getItem("user"));
