@@ -13,14 +13,19 @@ export const getRevenueReport = async (mode = "month") => {
   return handleResponse(response);
 };
 
-export const getDebtReport = async (mode = "month") => {
+export const getDebtReport = async (mode = "month", startDate = null, endDate = null) => {
   // Map common UI values to valid mode
   let queryMode = "month";
   if (String(mode).includes("Month")) queryMode = "month";
   if (String(mode).includes("Year")) queryMode = "year";
   if (String(mode).includes("Week")) queryMode = "week";
 
-  const response = await fetch(`${API_URL}/reports/debt?mode=${queryMode}`, {
+  let url = `${API_URL}/reports/debt?mode=${queryMode}`;
+  if (startDate && endDate) {
+    url += `&startDate=${startDate}&endDate=${endDate}`;
+  }
+
+  const response = await fetch(url, {
     headers: getAuthHeaders(),
   });
   return handleResponse(response);

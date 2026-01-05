@@ -65,7 +65,7 @@ function DebtReport({ user, onLogout, onNavigate }) {
 
   const fetchReport = async () => {
     try {
-      const data = await getDebtReport(selectedPeriod);
+      const data = await getDebtReport(selectedPeriod, fromDate, toDate);
       setReportData(data);
     } catch (error) {
       console.error("Failed to fetch debt report:", error);
@@ -212,21 +212,65 @@ function DebtReport({ user, onLogout, onNavigate }) {
           </div>
           <div className="date-input-group">
             <span className="date-input-caption">From</span>
-            <input
-              type="date"
-              value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
-              disabled={selectedPeriod !== "Custom Range"}
-            />
+            <div
+              className="date-input-wrapper"
+              onClick={(e) => {
+                const input = e.currentTarget.querySelector('input[type="date"]');
+                if (input && input.showPicker) {
+                  input.showPicker();
+                } else if (input) {
+                  input.focus();
+                }
+              }}
+            >
+              <input
+                type="date"
+                className="date-input"
+                value={fromDate}
+                onChange={(e) => {
+                  setFromDate(e.target.value);
+                  if (selectedPeriod !== "Custom Range") {
+                    setSelectedPeriod("Custom Range");
+                  }
+                }}
+              />
+              <span className="date-input-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#94a3b8">
+                  <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H5V9h14v9z" />
+                </svg>
+              </span>
+            </div>
           </div>
           <div className="date-input-group">
             <span className="date-input-caption">To</span>
-            <input
-              type="date"
-              value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
-              disabled={selectedPeriod !== "Custom Range"}
-            />
+            <div
+              className="date-input-wrapper"
+              onClick={(e) => {
+                const input = e.currentTarget.querySelector('input[type="date"]');
+                if (input && input.showPicker) {
+                  input.showPicker();
+                } else if (input) {
+                  input.focus();
+                }
+              }}
+            >
+              <input
+                type="date"
+                className="date-input"
+                value={toDate}
+                onChange={(e) => {
+                  setToDate(e.target.value);
+                  if (selectedPeriod !== "Custom Range") {
+                    setSelectedPeriod("Custom Range");
+                  }
+                }}
+              />
+              <span className="date-input-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#94a3b8">
+                  <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H5V9h14v9z" />
+                </svg>
+              </span>
+            </div>
           </div>
         </div>
         <div className="debt-summary-row">
