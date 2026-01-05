@@ -15,10 +15,43 @@ export default function RevenueReport({ user, onLogout, onNavigate }) {
   const [receipts, setReceipts] = useState([]);
   const isAdmin = (user?.role || "").toLowerCase() === "admin";
 
+  // Auto-calculate date range when period changes
+  useEffect(() => {
+    const now = new Date();
+    let start, end;
+
+    if (period === "This Month") {
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+      end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    } else if (period === "Last Month") {
+      start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      end = new Date(now.getFullYear(), now.getMonth(), 0);
+    } else if (period === "Last 3 Months") {
+      start = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+      end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    } else if (period === "This Year") {
+      start = new Date(now.getFullYear(), 0, 1);
+      end = new Date(now.getFullYear(), 11, 31);
+    } else {
+      // Custom Range - don't auto-set dates
+      return;
+    }
+
+    setFromDate(start.toISOString().split('T')[0]);
+    setToDate(end.toISOString().split('T')[0]);
+  }, [period]);
+
+  // Load agencies once
   useEffect(() => {
     getAgencies().then(setAgencies);
-    getExportReceipts().then(setReceipts);
   }, []);
+
+  // Refetch receipts when date range changes
+  useEffect(() => {
+    if (fromDate && toDate) {
+      getExportReceipts().then(setReceipts);
+    }
+  }, [fromDate, toDate]);
 
   const filteredReceipts = useMemo(() => {
     return receipts.filter((r) => {

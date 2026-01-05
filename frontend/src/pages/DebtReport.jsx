@@ -30,9 +30,38 @@ function DebtReport({ user, onLogout, onNavigate }) {
 
   const isAdmin = (user?.role || "").toLowerCase() === "admin";
 
+  // Auto-calculate date range when period changes
   useEffect(() => {
-    fetchReport();
+    const now = new Date();
+    let start, end;
+
+    if (selectedPeriod === "This Month") {
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+      end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    } else if (selectedPeriod === "Last Month") {
+      start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      end = new Date(now.getFullYear(), now.getMonth(), 0);
+    } else if (selectedPeriod === "Last 3 Months") {
+      start = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+      end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    } else if (selectedPeriod === "This Year") {
+      start = new Date(now.getFullYear(), 0, 1);
+      end = new Date(now.getFullYear(), 11, 31);
+    } else {
+      // Custom Range - don't auto-set dates
+      return;
+    }
+
+    setFromDate(start.toISOString().split('T')[0]);
+    setToDate(end.toISOString().split('T')[0]);
   }, [selectedPeriod]);
+
+  // Refetch report when dates change
+  useEffect(() => {
+    if (fromDate && toDate) {
+      fetchReport();
+    }
+  }, [fromDate, toDate]);
 
   const fetchReport = async () => {
     try {
@@ -177,7 +206,27 @@ function DebtReport({ user, onLogout, onNavigate }) {
               <option>This Month</option>
               <option>Last Month</option>
               <option>Last 3 Months</option>
+              <option>This Year</option>
+              <option>Custom Range</option>
             </select>
+          </div>
+          <div className="date-input-group">
+            <span className="date-input-caption">From</span>
+            <input
+              type="date"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+              disabled={selectedPeriod !== "Custom Range"}
+            />
+          </div>
+          <div className="date-input-group">
+            <span className="date-input-caption">To</span>
+            <input
+              type="date"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+              disabled={selectedPeriod !== "Custom Range"}
+            />
           </div>
         </div>
         <div className="debt-summary-row">
