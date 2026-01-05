@@ -11,13 +11,10 @@ function General({ user, onLogout, onNavigate }) {
       </div>
 
       <div className="welcome-card">
-        <div className="welcome-icon">
-          <svg width="64" height="64" viewBox="0 0 24 24" fill="#6366f1">
-            <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-4 0-7-3-7-7V8.3l7-3.11 7 3.11V13c0 4-3 7-7 7z" />
-            <path d="M10.5 13.5l-2-2-1.5 1.5 3.5 3.5 5.5-5.5-1.5-1.5z" />
-          </svg>
-        </div>
-        <h2>General Dashboard</h2>
+          <div className="welcome-icon">
+            <img src="/company.png" alt="Company Logo" width="64" height="64" style={{ display: 'block', margin: '0 auto' }} />
+          </div>
+        <h2>Dashboard</h2>
         <p>Access all your agency management tools from the sidebar.</p>
         <div className="stats-grid">
           <div className="stat-card">

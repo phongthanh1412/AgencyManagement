@@ -108,9 +108,7 @@ function Sidebar({ currentPage, onNavigate, user }) {
     <aside className="sidebar">
       <div className="sidebar-header" onClick={() => onNavigate('general')} style={{ cursor: 'pointer' }}>
         <div className="sidebar-logo">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
-            <path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/>
-          </svg>
+          <img src="/travel-agency.png" alt="Agency Logo" style={{ width: 32, height: 32, objectFit: 'contain' }} />
         </div>
         <div className="sidebar-title">Agency System</div>
         <div className="sidebar-subtitle">Management Platform</div>

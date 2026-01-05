@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import LoadingSpinner from './components/LoadingSpinner';
 import Login from './pages/Login';
 import SignUp from './pages/SignUp';
 import General from './pages/General';
@@ -25,7 +26,19 @@ const ProtectedRoute = ({ user, children }) => {
 
 const AppRoutes = ({ user, onLogin, onLogout }) => {
     const [editingAgency, setEditingAgency] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Show loading effect when navigating
+    useEffect(() => {
+        setIsLoading(true);
+        const timer = setTimeout(() => {
+            setIsLoading(false);
+        }, 400); // Loading duration
+
+        return () => clearTimeout(timer);
+    }, [location.pathname]);
 
     // Helper to standard props passed to pages
     const pageProps = {
@@ -33,6 +46,10 @@ const AppRoutes = ({ user, onLogin, onLogout }) => {
         onLogout,
         onNavigate: (path) => navigate(path === 'login' ? '/login' : path === 'signup' ? '/signup' : `/${path}`)
     };
+
+    if (isLoading && location.pathname !== '/login' && location.pathname !== '/signup') {
+        return <LoadingSpinner fullScreen={true} />;
+    }
 
     return (
         <Routes>
