@@ -13,8 +13,8 @@ exports.getRevenueReport = async (req, res) => {
 
 exports.getDebtReport = async (req, res) => {
   try {
-    const { mode } = req.query;
-    const report = await reportService.getDebtReport(mode);
+    const { mode, startDate, endDate } = req.query;
+    const report = await reportService.getDebtReport(mode, startDate, endDate);
     res.json(report);
   } catch (error) {
     const status = error.message === "Invalid mode" ? 400 : 500;

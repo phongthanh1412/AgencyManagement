@@ -76,18 +76,27 @@ class ReportService {
     };
   }
 
-  async getDebtReport(mode) {
+  async getDebtReport(mode, customStartDate = null, customEndDate = null) {
     // Determine filter time range
     const now = new Date();
-    let startDate;
+    let startDate, endDate;
 
-    if (mode === "week") {
+    // If custom dates provided, use them
+    if (customStartDate && customEndDate) {
+      startDate = new Date(customStartDate);
+      endDate = new Date(customEndDate);
+      // Set endDate to end of day
+      endDate.setHours(23, 59, 59, 999);
+    } else if (mode === "week") {
       startDate = new Date(now);
       startDate.setDate(now.getDate() - 7);
+      endDate = now;
     } else if (mode === "month") {
       startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      endDate = now;
     } else if (mode === "year") {
       startDate = new Date(now.getFullYear(), 0, 1);
+      endDate = now;
     } else {
       throw new Error("Invalid mode");
     }
@@ -112,9 +121,26 @@ class ReportService {
       beginningDebtsAgg.map(x => [String(x._id), x.beginningDebt])
     );
 
+    // Calculate ending debt for each agency:
+    // Get latest DebtHistory record before or equal to endDate
+    const endingDebtsAgg = await DebtHistory.aggregate([
+      { $match: { date: { $lte: endDate } } },
+      { $sort: { date: -1 } },
+      {
+        $group: {
+          _id: "$agencyId",
+          endingDebt: { $first: "$debtAfter" }
+        }
+      }
+    ]);
+
+    const endingDebtMap = new Map(
+      endingDebtsAgg.map(x => [String(x._id), x.endingDebt])
+    );
+
     // Calculate changes in filter range for each agency
     const changesAgg = await DebtHistory.aggregate([
-      { $match: { date: { $gt: startDate, $lte: now } } },
+      { $match: { date: { $gt: startDate, $lte: endDate } } },
       {
         $group: {
           _id: "$agencyId",
@@ -137,22 +163,18 @@ class ReportService {
     const agenciesReport = agencies.map(a => {
       const id = String(a._id);
 
+      const beginningDebt = beginningDebtMap.get(id) || 0;
+      const endingDebt = endingDebtMap.get(id) || beginningDebt;
       const changes = changesMap.get(id) || 0;
-      totalChanges += changes;
-
-      // Use currentDebt as the source of truth for Ending Debt
-      const endingDebt = Number(a.currentDebt);
-
-      // Back-calculate Beginning Debt: Ending - Changes
-      const beginningDebt = endingDebt - changes;
 
       totalBeginningDebt += beginningDebt;
       totalEndingDebt += endingDebt;
+      totalChanges += changes;
 
-      // status based on currentDebt / maxAllowedDebt (not dependent on filter)
+      // status based on endingDebt / maxAllowedDebt
       const maxDebt = Number(a.typeId?.maxDebt) || 0;
 
-      const ratio = maxDebt > 0 ? a.currentDebt / maxDebt : 0;
+      const ratio = maxDebt > 0 ? endingDebt / maxDebt : 0;
 
       let status = "normal";
       if (ratio >= 0.9) status = "high risk";
@@ -179,7 +201,7 @@ class ReportService {
     return {
       mode,
       startDate,
-      endDate: now,
+      endDate,
       totalDebt,
       highRiskCount,
       totalChanges,
